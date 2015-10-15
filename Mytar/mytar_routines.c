@@ -32,7 +32,7 @@ copynFile(FILE * origin, FILE * destination, int nBytes)
         outputByte = putc(readByte, destination);
         totalBytes++;
     }
-    
+
     return totalBytes;
 }
 
@@ -173,6 +173,8 @@ createTar(int nFiles, char *fileNames[], char tarName[])
         stHeader[index].size = copiedBytes; // Set the size from the copiedBytes for each struct.
         stHeader[index].name = malloc(sizeof(fileNames[index]) + 1); // Heap space for the name char + '\0' character
         strcpy(stHeader[index].name, fileNames[index]); // Copy one string to the struct entry
+
+        printf("%d\n", stHeader[index].size);
 
         if (fclose(inputFile) == EOF) return EXIT_FAILURE; // Wasn't possible to close the file. Return and error
     }
