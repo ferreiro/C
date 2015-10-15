@@ -97,15 +97,15 @@ int
 readHeader(FILE * tarFile, stHeaderEntry ** header, int *nFiles)
 {
     int nr_files = 0, index = 0, size = 0; // Return parameter
-    stHeaderEntry *array=NULL; // header for creating heap space
+    stHeaderEntry *stHeader=NULL; // header for creating heap space
     stHeaderEntry *auxHeader; // header for creating heap space
     
     fread( &nr_files, sizeof(int), 1, tarFile); // read the number of files of a mtar
     *nFiles = nr_files; // Return the number of files for the mtar
 
-    /* Allocate memory for the array */
-    array=malloc(sizeof(stHeaderEntry)*nr_files);
-    auxHeader = array; // used for traverse the array of structs
+    /* Allocate memory for the stHeader */
+    stHeader=malloc(sizeof(stHeaderEntry)*nr_files);
+    auxHeader = stHeader; // used for traverse the stHeader of structs
 
     //char endLine;
     //fread(&endLine, sizeof(char), 1, tarFile); // get '/0'
@@ -119,10 +119,10 @@ readHeader(FILE * tarFile, stHeaderEntry ** header, int *nFiles)
         auxHeader->size = size;
         printf("Size %d\n", auxHeader->size);
 
-        auxHeader++;
+        // auxHeader++;
     }
     /*
-    // Read the (pathname,size) pairs from tarFile and store them in the array
+    // Read the (pathname,size) pairs from tarFile and store them in the stHeader
     for (index = 0; index < nr_files; index++) {
         int size = 0;
         int nameReaded = loadstr(tarFile, &auxHeader->name); // Set axuHeader name - auxHeader->name = fileNames[index];
@@ -137,9 +137,9 @@ readHeader(FILE * tarFile, stHeaderEntry ** header, int *nFiles)
         auxHeader++;
     }
     */
-    
+
     (*nFiles)=nr_files;
-    (*header)=array;
+    (*header)=stHeader;
 
     return (EXIT_SUCCESS);
 }
