@@ -32,15 +32,6 @@ copynFile(FILE * origin, FILE * destination, int nBytes)
         outputByte = putc(readByte, destination);
         totalBytes++;
     }
-
-    return totalBytes;
-    
-    if (totalBytes == 0 || ferror(origin) != 0) {
-        totalBytes = -1; // automatically returns -1 cause we couldn't copy all the bytes or there was an error reading a specific byte
-        if (ferror(origin) != 0) { // error reading from file
-            clearerr(origin); // Clean the error occured when reading from file
-        }
-    }
     
     return totalBytes;
 }
@@ -61,8 +52,8 @@ copynFile(FILE * origin, FILE * destination, int nBytes)
  */
 int loadstr(FILE * file, char **buf) {
     int filenameLength = 0, index = 0;
-    char bit;
     char *name;
+    char bit;
 
     while((bit = getc(file) != '\0')) {
         filenameLength++;
