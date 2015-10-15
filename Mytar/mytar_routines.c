@@ -65,12 +65,14 @@ loadstr(FILE * file, char **buf)
     char *name; // array of characters. must be returned though buf
     char auxName[100];
     
+    //char endLine;
+    //fread(&endLine, sizeof(char), 1, tarFile); // get '/0'
     while((bit = getc(file)) != '\0') {
         filenameLength++;
         auxName[filenameLength] = bit; // save bit in aux array
     }
     
-    name = malloc(sizeof(char) * filenameLength + 1); // 1 = last "\0"
+    name = malloc(sizeof(char) * filenameLength); // 1 = last "\0"
     name = auxName;
     
     (*buf)=name; // (*buf)=<address>
@@ -98,23 +100,20 @@ readHeader(FILE * tarFile, stHeaderEntry ** header, int *nFiles)
     
     fread( &nr_files, sizeof(int), 1, tarFile); // read the number of files of a mtar
     *nFiles = nr_files; // Return the number of files for the mtar
-    
+
     /* Allocate memory for the array */
     array=malloc(sizeof(stHeaderEntry)*nr_files);
     auxHeader = array; // used for traverse the array of structs
     
+    //char endLine;
+    //fread(&endLine, sizeof(char), 1, tarFile); // get '/0'
+
     // Read the (pathname,size) pairs from tarFile and store them in the array
     for (index = 0; index < nr_files; index++) {
-        int fileSize, nameReaded;
-
-        nameReaded = loadstr(tarFile, &auxHeader->name); // Set axuHeader name - auxHeader->name = fileNames[index];
-        
-        if (nameReaded == 0) {
-            printf("File readed %s \n", auxHeader->name);
-        }
-
-        fread( &fileSize, sizeof(int), 1, tarFile); // Size of the file the mytar file (after read the name)
-        auxHeader->size = fileSize; // Set size of the file in the structure
+        int nameReaded = loadstr(tarFile, &auxHeader->name); // Set axuHeader name - auxHeader->name = fileNames[index];
+    
+        if (nameReaded == 0) { printf("File name: %s \n", auxHeader->name); }
+        fread(&auxHeader->size, sizeof(int), 1, tarFile); // Set size of the file in the structure
         printf("Size %d\n", auxHeader->size);
     }
     
@@ -239,17 +238,27 @@ createTar(int nFiles, char *fileNames[], char tarName[])
 int
 extractTar(char tarName[])
 {
-    int headerRead = -1, nFiles = 0;
+    int headerRead = -1, nr_files = 0, index = 0;
     FILE *tarFile = fopen(tarName, "r");
     stHeaderEntry * header;
 
-    headerRead = readHeader(tarFile, &header, &nFiles);
+    headerRead = readHeader(tarFile, &header, &nr_files);
     
-    if (headerRead == 0) { printf("Header read! \n");}
+    if (headerRead == 0) { /*printf("Header read! \n"); */ }
     else { return (EXIT_FAILURE); }
 
-    printf("%d\n", headerRead);
- 
+    int long offset = sizeof(stHeaderEntry)*nr_files;
+
+    fseek(tarFile, offset, SEEK_SET); // skip the header on file
+
+    for (index = 0; index < nr_files; index++) {
+        int totalBytes = 0, nBytes = header->size, readByte;
+        while((totalBytes < nBytes) && ((readByte = getc(tarFile)) != EOF)) {
+            printf("%c\n", readByte);
+            totalBytes++;
+        }
+        header++;
+    }
 
 	return (EXIT_SUCCESS);
 }
