@@ -164,7 +164,6 @@ createTar(int nFiles, char *fileNames[], char tarName[])
     // First calculate the size of the header (filename+size) for all the struct
     
     stHeaderEntry *stHeader = malloc(sizeof(stHeaderEntry) * nFiles); 
-    stHeaderEntry *auxHeader = stHeader; // Using for traverse the header
     
     nbytes=nFiles*sizeof(unsigned int)+sizeof(int);
 
@@ -183,20 +182,17 @@ createTar(int nFiles, char *fileNames[], char tarName[])
         FILE * origin = fopen(fileNames[index], "r");
         copiedBytes = copynFile(origin, destination, INT_MAX); // destination is the tarbar file
 
-        auxHeader->size = copiedBytes; // Size is not yet nown. We'll know it after reading the files
-        auxHeader->name = malloc(sizeof(fileNames[index]) + 1); // Heap space for the name char + '\0' character
-        strcpy(auxHeader->name, fileNames[index]); // Copy one string to the struct entry
+        stHeader[index].size = copiedBytes;
+        stHeader[index].name = malloc(sizeof(fileNames[index]) + 1); // Heap space for the name char + '\0' character
+        strcpy(stHeader[index].name, fileNames[index]); // Copy one string to the struct entry
 
-        // printf("auxHeader->name is %s\n", auxHeader->name);
-        // printf("auxHeader->number is %d\n", auxHeader->size);
-        // printf("auxHeader position is %p\n", auxHeader);
+        // printf("stHeader->name is %s\n", stHeader->name);
+        // printf("stHeader->number is %d\n", stHeader->size);
+        // printf("stHeader position is %p\n", stHeader);
 
         if (fclose(origin) == EOF) return EXIT_FAILURE; // Try to close the file
-        auxHeader++; // Go to the next struct element - don't do anything after this line in the for
     }
-    
-    auxHeader = stHeader; // Write headers: The struct agains points to the beginning of the stHeader
-    
+        
     if (fseek(destination, 0, SEEK_SET) != 0) return EXIT_FAILURE;
     // else: // pointer at the beginning of the file to write the header
 
@@ -205,10 +201,9 @@ createTar(int nFiles, char *fileNames[], char tarName[])
     for (index = 0; index < nFiles; index++) {
         // Write header for each struct
         // Documentation: http://www.tutorialspoint.com/c_standard_library/c_function_fwrite.htm
-        fwrite(auxHeader->name, strlen(auxHeader->name)+1, 1, destination);
-        fwrite(&auxHeader->size, sizeof(unsigned int), 1, destination);
-        printf("%d\n", auxHeader->size);
-        auxHeader++;
+        fwrite(stHeader[index].name, strlen(stHeader[index].name)+1, 1, destination);
+        fwrite(&stHeader[index].size, sizeof(unsigned int), 1, destination);
+        printf("%d\n", stHeader[index].size);
     }
   
     
