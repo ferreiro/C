@@ -20,17 +20,19 @@ copynFile(FILE * origin, FILE * destination, int nBytes)
     int totalBytes = 0; // amount of bytes copied to file | -1 if any byte were copied or an error occurs
     int outputByte = 0; // Byte written to destination file.
     int readByte = 0;  // Byte readen from the origin file
-    
+
     // Documentation http://www.tutorialspoint.com/c_standard_library/c_function_ferror.htm
 
     if (origin == NULL) { return -1; } // Origin file doesn't exit. 0 characters copied
     
     // In the loop we copied each byte from origin to destination.
     
-    while((totalBytes < nBytes) && ((readByte = getc(origin)) != EOF) && (ferror(origin) == 0)) {
+    while((totalBytes < nBytes) && (readByte = getc(origin)) != EOF) { // && (ferror(origin) == 0)) {
         outputByte = putc(readByte, destination);
         totalBytes++;
     }
+
+    return totalBytes;
     
     if (totalBytes == 0 || ferror(origin) != 0) {
         totalBytes = -1; // automatically returns -1 cause we couldn't copy all the bytes or there was an error reading a specific byte
@@ -56,28 +58,27 @@ copynFile(FILE * origin, FILE * destination, int nBytes)
  * 
  * Returns: 0 if success, -1 if error
  */
-int
-loadstr(FILE * file, char **buf)
-{
-    int valid = 0; // 0 = valid | 1 = not valid
-    int filenameLength = 0; // len
+int loadstr(FILE * file, char **buf) {
+    int filenameLength = 0, index = 0;
     char bit;
-    char *name; // array of characters. must be returned though buf
-    char auxName[100];
-    
-    //char endLine;
-    //fread(&endLine, sizeof(char), 1, tarFile); // get '/0'
-    while((bit = getc(file)) != '\0') {
+    char *name;
+
+    while((bit = getc(file) != '\0')) {
         filenameLength++;
-        auxName[filenameLength] = bit; // save bit in aux array
+        if (bit == 0) {}
     }
-    
-    name = malloc(sizeof(char) * filenameLength); // 1 = last "\0"
-    name = auxName;
-    
+
+    name =  malloc(sizeof(char) * (filenameLength + 1)); // +1 for the \0 character
+    fseek(file, -(filenameLength + 1), SEEK_CUR);
+
+    for (index = 0; index < filenameLength+1; index++) {
+        name[index] = getc(file);
+        putc(name[index],stdout);
+    }    
+
+    printf("The string is %s\n", name);
     (*buf)=name; // (*buf)=<address>
-    
-	return valid;
+    return 0;
 }
 
 /** Read tarball header and store it in memory.
@@ -110,11 +111,15 @@ readHeader(FILE * tarFile, stHeaderEntry ** header, int *nFiles)
 
     // Read the (pathname,size) pairs from tarFile and store them in the array
     for (index = 0; index < nr_files; index++) {
+        int size = 0;
         int nameReaded = loadstr(tarFile, &auxHeader->name); // Set axuHeader name - auxHeader->name = fileNames[index];
     
         if (nameReaded == 0) { printf("File name: %s \n", auxHeader->name); }
-        fread(&auxHeader->size, sizeof(int), 1, tarFile); // Set size of the file in the structure
+        fread(&size, sizeof(unsigned int), 1, tarFile); // Set size of the file in the structure
+        auxHeader->size = size;
         printf("Size %d\n", auxHeader->size);
+
+        auxHeader++;
     }
     
     (*nFiles)=nr_files;
@@ -144,12 +149,14 @@ readHeader(FILE * tarFile, stHeaderEntry ** header, int *nFiles)
  * pairs occupy strlen(name)+1 bytes.
  *
  */
+
 int
 createTar(int nFiles, char *fileNames[], char tarName[])
 {
     int created = EXIT_SUCCESS; // returned variable
     int index = 0, copiedBytes = 0, closedFile = 0;
-    
+    int nbytes;
+
     FILE * destination = fopen(tarName, "w"); // Tarbar file to write the header and data
     
     // OBJETIVE: write in the tarbar file the header (filename+size) and the data for each file
@@ -158,6 +165,13 @@ createTar(int nFiles, char *fileNames[], char tarName[])
     stHeaderEntry *stHeader = malloc(sizeof(stHeaderEntry) * nFiles);
     stHeaderEntry *auxHeader = stHeader; // Using for traverse the header
     
+    nbytes=nFiles*sizeof(unsigned int)+sizeof(int);
+
+     for (index = 0; index < nFiles; index++)
+            nbytes+=strlen(fileNames[index])+1;
+
+    fseek(destination, nbytes, SEEK_SET); 
+
     for (index = 0; index < nFiles; index++) {
         
         // Now we have to copy each file content to the TarBar file
@@ -169,13 +183,14 @@ createTar(int nFiles, char *fileNames[], char tarName[])
         copiedBytes = copynFile(origin, destination, INT_MAX); // destination is the tarbar file
         closedFile = fclose(origin); // closed the reading file
         
+
         if (closedFile == EOF) {
             created = EXIT_FAILURE;
         }
         
         // reserve space for each name field in the struct
         auxHeader->name = malloc(sizeof(fileNames[index]) + 1); // reserve space depending on filename size + 1 for the "\0"
-        auxHeader->name = fileNames[index]; // Set the header name with the filename
+        strcpy(auxHeader->name, fileNames[index]); // Set the header name with the filename
         auxHeader->size = copiedBytes; // Size is not yet nown. We'll know it after reading the files
         
         // printf("auxHeader->name is %s\n", auxHeader->name);
@@ -189,24 +204,21 @@ createTar(int nFiles, char *fileNames[], char tarName[])
     auxHeader = stHeader; // The struct agains points to the beginning of the stHeader
     int success = fseek(destination, 0, SEEK_SET); // put the pointer at the beginning of the file to write the header
     
-    if (success == 0) {
-        fwrite(&nFiles, sizeof(int), 1, destination); // write number of files in .mtar
-        
-        for (index = 0; index < nFiles; index++) {
-            // Write header for each struct
-            // Documentation: http://www.tutorialspoint.com/c_standard_library/c_function_fwrite.htm
-            fwrite(auxHeader->name, strlen(auxHeader->name), 1, destination);
-            char endLine = '\0';
-            fwrite(&endLine, sizeof(char), 1, destination);
-            fwrite(&auxHeader->size, sizeof(int), 1, destination);
-            printf("%d\n", auxHeader->size);
-            auxHeader++;
-        }
+    if (success != 0) {
+        return EXIT_FAILURE;
     }
-    else {
-        created = EXIT_FAILURE;
-        // printf("We can't point the pointer to the start of the file");
+
+    fwrite(&nFiles, sizeof(int), 1, destination); // write number of files in .mtar
+    
+    for (index = 0; index < nFiles; index++) {
+        // Write header for each struct
+        // Documentation: http://www.tutorialspoint.com/c_standard_library/c_function_fwrite.htm
+        fwrite(auxHeader->name, strlen(auxHeader->name)+1, 1, destination);
+        fwrite(&auxHeader->size, sizeof(unsigned int), 1, destination);
+        printf("%d\n", auxHeader->size);
+        auxHeader++;
     }
+  
     
     closedFile = fclose(destination); // closed the reading file
     
@@ -254,7 +266,7 @@ extractTar(char tarName[])
     for (index = 0; index < nr_files; index++) {
         int totalBytes = 0, nBytes = header->size, readByte;
         while((totalBytes < nBytes) && ((readByte = getc(tarFile)) != EOF)) {
-            printf("%c\n", readByte);
+            putc(readByte,stdout);
             totalBytes++;
         }
         header++;
