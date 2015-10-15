@@ -109,8 +109,13 @@ readHeader(FILE * tarFile, stHeaderEntry ** header, int *nFiles)
 
         nameReaded = loadstr(tarFile, &auxHeader->name); // Set axuHeader name - auxHeader->name = fileNames[index];
         
+        if (nameReaded == 0) {
+            printf("File readed %s \n", auxHeader->name);
+        }
+
         fread( &fileSize, sizeof(int), 1, tarFile); // Size of the file the mytar file (after read the name)
         auxHeader->size = fileSize; // Set size of the file in the structure
+        printf("Size %d\n", auxHeader->size);
     }
     
     (*nFiles)=nr_files;
@@ -185,17 +190,17 @@ createTar(int nFiles, char *fileNames[], char tarName[])
     auxHeader = stHeader; // The struct agains points to the beginning of the stHeader
     int success = fseek(destination, 0, SEEK_SET); // put the pointer at the beginning of the file to write the header
     
-    
     if (success == 0) {
+        fwrite(&nFiles, sizeof(int), 1, destination); // write number of files in .mtar
         
-        fwrite(&nFiles, sizeof(int), 1, destination); // print number of files at beginning
-        // Write header of each struct (stored in the heap)
         for (index = 0; index < nFiles; index++) {
+            // Write header for each struct
             // Documentation: http://www.tutorialspoint.com/c_standard_library/c_function_fwrite.htm
             fwrite(auxHeader->name, strlen(auxHeader->name), 1, destination);
             char endLine = '\0';
             fwrite(&endLine, sizeof(char), 1, destination);
             fwrite(&auxHeader->size, sizeof(int), 1, destination);
+            printf("%d\n", auxHeader->size);
             auxHeader++;
         }
     }
@@ -234,9 +239,17 @@ createTar(int nFiles, char *fileNames[], char tarName[])
 int
 extractTar(char tarName[])
 {
-	int result = EXIT_SUCCESS;
+    int headerRead = -1, nFiles = 0;
+    FILE *tarFile = fopen(tarName, "r");
+    stHeaderEntry * header;
 
+    headerRead = readHeader(tarFile, &header, &nFiles);
+    
+    if (headerRead == 0) { printf("Header read! \n");}
+    else { return (EXIT_FAILURE); }
 
+    printf("%d\n", headerRead);
+ 
 
-	return result;
+	return (EXIT_SUCCESS);
 }
