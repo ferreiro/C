@@ -172,7 +172,11 @@ createTar(int nFiles, char *fileNames[], char tarName[])
 
     for (index=0; index < nFiles; index++) {
 
-        inputFile   = fopen(fileNames[index], "r"); // Open each textfile passing in this function.
+        if ((inputFile = fopen(fileNames[index], "r")) == NULL) {
+            printf("Yo! File: %s doesn't exist\n", fileNames[index]);
+            return (EXIT_FAILURE);
+        } // Try to open the file. EXIT_FAILURE will be returned if errors
+
         copiedBytes = copynFile(inputFile, outputFile, INT_MAX); // Copy N bytes to the output file (INT_MAX == huge number to ensure you copy all the character)
 
         stHeader[index].size = copiedBytes; // Set the size from the copiedBytes for each struct.
@@ -185,7 +189,7 @@ createTar(int nFiles, char *fileNames[], char tarName[])
     // Now move the file pointer to the beggining of the file in order to write: number of files + the header for each file
 
     if (fseek(outputFile, 0, SEEK_SET) != 0)
-        return EXIT_FAILURE; // wasn't possible to move the pointer to the beginning of the file. Returns and error
+        return (EXIT_FAILURE); // wasn't possible to move the pointer to the beginning of the file. Returns and error
     else
         fwrite(&nFiles, sizeof(int), 1, outputFile); // write Number of Files in the output .tar
     
@@ -193,24 +197,22 @@ createTar(int nFiles, char *fileNames[], char tarName[])
     // Documentation: http://www.tutorialspoint.com/c_standard_library/c_function_fwrite.htm
 
     for (index = 0; index < nFiles; index++) {
-        fwrite(stHeader[index].name, strlen(stHeader[index].name)+1, 1, outputFile); // Important! Length of stheader + 1 (for the last \0 character)
-        fwrite(&stHeader[index].size, sizeof(unsigned int), 1, outputFile);
-        printf("%d\n", stHeader[index].size);
+        fwrite(stHeader[index].name, strlen(stHeader[index].name)+1, 1, outputFile); // Important add one when saving the length for the name (for the '\0' character)
+        fwrite(&stHeader[index].size, sizeof(unsigned int), 1, outputFile); // Write one byte 
+        // printf("%d\n", stHeader[index].size);
     }
 
     // FREE MEMORY. First, delete the char *names pointer.
     // Then erase all the structs.
     
-
     for (index=0; index < nFiles; index++) {
         free(stHeader[index].name); // Free the filenames array of characters
     }
 
     free(stHeader); // Free the struct created in heap
 
-    if (fclose(outputFile) == EOF) {
-        return (EXIT_FAILURE); // Try close file. Return an error if wasn't possible
-    }
+    if (fclose(outputFile) == EOF) { return (EXIT_FAILURE); } // Try close file. Return an error if wasn't possible
+
     return (EXIT_SUCCESS);
 }
 
@@ -244,9 +246,10 @@ extractTar(char tarName[])
     if (readHeader(tarFile, &stHeader, &nr_files) == -1) {
         printf("We couldn't load the header \n");
         return (EXIT_FAILURE); 
-    } // Returns the number of files + an array of struct with size/name for each file
+    } // Returns in stHeader the array of struct (name/size) for each file and in nr_files the total num of files in the .mtar
 
-    // Write in each file the data (text)
+    // Write the content to the outputFile
+
     for (index = 0; index < nr_files; index++) {
 
         if ((destinationFile = fopen(stHeader[index].name, "w")) == NULL) { return EXIT_FAILURE; } // Try to open the output file | return error if we couldn't create the file
