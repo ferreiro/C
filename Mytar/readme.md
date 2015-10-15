@@ -1,5 +1,5 @@
 # Mytar program
-What's Mytar? Is a simple program to "compress" and extract a file. The basic idea is that you can create a .mtar file or parse a given mtar.
+What's Mytar? Is a simple program to "compress" and extract a file. The basic idea is that you can create a .mtar file or parse a given mtar (so the programm will create the .txt files with the data from mtar).
 
 > For executing the Mytar program you just only need to:
 1. Download/fork this repository. 
