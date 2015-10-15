@@ -80,6 +80,7 @@ cd $OUTPUT_DIRECTORY
 ./../../mytar -x -f $MYTAR_FILE # extract files in the out folder
 
 # 8. Use the diff program to compare the contents of each extracted file with the associated original file found in the parent directory (..).
+# INFO: http://www.linuxquestions.org/questions/linux-newbie-8/bash-script-to-compare-two-files-563836/
 
 if diff ../$FILENAME1 $FILENAME1 >/dev/null ; then
   	echo "$FILENAME1 are equal in both directories [OK]"

@@ -5,6 +5,7 @@
 #include "mytar.h"
 
 extern char *use;
+const int DEVELOPING = 0; // 1 = prints all the debug stuff on console
 
 /** Copy nBytes from the origin file to the destination file.
  *
@@ -91,7 +92,7 @@ readHeader(FILE * tarFile, stHeaderEntry ** header, int *nFiles)
     stHeaderEntry *stHeader=NULL; // header for creating heap space
 
     if (fread( &nr_files, sizeof(int), 1, tarFile) == 0) { // read "number of files" compress in the .mtar
-        printf("Wasn't possible to read the mtar file\n");
+        if(DEVELOPING == 1) printf("Wasn't possible to read the mtar file\n");
         return EXIT_FAILURE; // wans't possible to read the mtar file
     }
 
@@ -100,7 +101,7 @@ readHeader(FILE * tarFile, stHeaderEntry ** header, int *nFiles)
     for (index = 0; index < nr_files; index++) {
 
         if (loadstr(tarFile, &stHeader[index].name) != 0) {
-            printf("Wasn't possible to read the mtar file\n");
+            if(DEVELOPING == 1) printf("Wasn't possible to read the mtar file\n");
             return EXIT_FAILURE;
         }
 
@@ -164,7 +165,7 @@ createTar(int nFiles, char *fileNames[], char tarName[])
     for (index=0; index < nFiles; index++) {
 
         if ((inputFile = fopen(fileNames[index], "r")) == NULL) {
-            printf("Yo! File: %s doesn't exist\n", fileNames[index]);
+            if(DEVELOPING == 1) printf("Yo! File: %s doesn't exist\n", fileNames[index]);
             return (EXIT_FAILURE);
         } // Try to open the file. EXIT_FAILURE will be returned if errors
 
@@ -174,8 +175,7 @@ createTar(int nFiles, char *fileNames[], char tarName[])
         stHeader[index].name = malloc(sizeof(fileNames[index]) + 1); // Heap space for the name char + '\0' character
         strcpy(stHeader[index].name, fileNames[index]); // Copy one string to the struct entry
 
-        printf("%d\n", stHeader[index].size);
-
+        if (DEVELOPING == 1) printf("File %s size is %d bytes\n", stHeader[index].name, stHeader[index].size);
         if (fclose(inputFile) == EOF) return EXIT_FAILURE; // Wasn't possible to close the file. Return and error
     }
      
@@ -232,12 +232,12 @@ extractTar(char tarName[])
     int nr_files = 0, index = 0, copiedBytes = 0;
 
     if((tarFile = fopen(tarName, "r") ) == NULL) {
-        printf("Yo! %s file doesn't exit \n", tarName);
+        if(DEVELOPING == 1) printf("Yo! %s file doesn't exit \n", tarName);
         return (EXIT_FAILURE); // File doesn't exit or there was a problem
     }
 
     if (readHeader(tarFile, &stHeader, &nr_files) == -1) {
-        printf("We couldn't load the header \n");
+        if(DEVELOPING == 1) printf("We couldn't load the header \n");
         return (EXIT_FAILURE); 
     } // Returns in stHeader the array of struct (name/size) for each file and in nr_files the total num of files in the .mtar
 
@@ -254,11 +254,13 @@ extractTar(char tarName[])
     }
     
     // DEBUG STUFF
-    printf("Number of files is %d\n", nr_files);
-    for (index = 0; index <nr_files;index++) {
-        printf("Filename is %s and size is %u \n", stHeader[index].name, stHeader[index].size);
+    if(DEVELOPING == 1) {
+        printf("Number of files is %d\n", nr_files);
+        for (index = 0; index <nr_files;index++) {
+            printf("File %s size is %d bytes\n", stHeader[index].name, stHeader[index].size);
+        }
     }
-    
+
     // FREE MEMORY
 
     for (index = 0; index <nr_files; index++) {
