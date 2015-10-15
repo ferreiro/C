@@ -6,7 +6,7 @@
 
 extern char *use;
 
-/** Copy nBytes bytes from the origin file to the destination file.
+/** Copy nBytes from the origin file to the destination file.
  *
  * origin: pointer to the FILE descriptor associated with the origin file
  * destination:  pointer to the FILE descriptor associated with the destination file
@@ -74,10 +74,10 @@ int loadstr(FILE * file, char **buf) {
 
     for (index = 0; index < filenameLength+1; index++) {
         name[index] = getc(file);
-        putc(name[index],stdout);
+        // DEBUG: putc(name[index],stdout);
     }    
 
-    printf("The string is %s\n", name);
+    // printf("The string is %s\n", name);
     (*buf)=name; // (*buf)=<address>
     return 0;
 }
@@ -98,47 +98,26 @@ readHeader(FILE * tarFile, stHeaderEntry ** header, int *nFiles)
 {
     int nr_files = 0, index = 0, size = 0; // Return parameter
     stHeaderEntry *stHeader=NULL; // header for creating heap space
-    stHeaderEntry *auxHeader; // header for creating heap space
-    
-    fread( &nr_files, sizeof(int), 1, tarFile); // read the number of files of a mtar
-    *nFiles = nr_files; // Return the number of files for the mtar
 
-    /* Allocate memory for the stHeader */
-    stHeader=malloc(sizeof(stHeaderEntry)*nr_files);
-    auxHeader = stHeader; // used for traverse the stHeader of structs
+    if (fread( &nr_files, sizeof(int), 1, tarFile) == 0) { // read "number of files" compress in the .mtar
+        printf("Wasn't possible to read the mtar file\n");
+        return EXIT_FAILURE; // wans't possible to read the mtar file
+    }
 
-    //char endLine;
-    //fread(&endLine, sizeof(char), 1, tarFile); // get '/0'
-
+    stHeader=malloc(sizeof(stHeaderEntry)*nr_files); // Allocate memory for the stHeader
+   
     for (index = 0; index < nr_files; index++) {
-        int size = 0;
 
-        if (loadstr(tarFile, &auxHeader->name) != 0) {return EXIT_FAILURE;}
+        if (loadstr(tarFile, &stHeader[index].name) != 0) {
+            printf("Wasn't possible to read the mtar file\n");
+            return EXIT_FAILURE;
+        }
 
         fread(&size, sizeof(unsigned int), 1, tarFile); // Set size of the file in the structure
-        auxHeader->size = size;
-        printf("Size %d\n", auxHeader->size);
-
-        // auxHeader++;
+        stHeader[index].size = size;
     }
-    /*
-    // Read the (pathname,size) pairs from tarFile and store them in the stHeader
-    for (index = 0; index < nr_files; index++) {
-        int size = 0;
-        int nameReaded = loadstr(tarFile, &auxHeader->name); // Set axuHeader name - auxHeader->name = fileNames[index];
-        
-        if (nameReaded != 0) return EXIT_FAILURE;
 
-        // if (nameReaded == 0) { printf("File name: %s \n", auxHeader->name); }
-        fread(&size, sizeof(unsigned int), 1, tarFile); // Set size of the file in the structure
-        auxHeader->size = size;
-        printf("Size %d\n", auxHeader->size);
-
-        auxHeader++;
-    }
-    */
-
-    (*nFiles)=nr_files;
+    (*nFiles)=nr_files; // Return the number of files for the mtar
     (*header)=stHeader;
 
     return (EXIT_SUCCESS);
@@ -251,29 +230,46 @@ createTar(int nFiles, char *fileNames[], char tarName[])
  */
 int
 extractTar(char tarName[])
-{
-    int headerRead = -1, nr_files = 0, index = 0;
-    FILE *tarFile = fopen(tarName, "r");
-    stHeaderEntry * header;
+{ 
+    FILE *tarFile = NULL; // file manager
+    FILE *destinationFile = NULL;
+    stHeaderEntry *stHeader; // Array of structs for header
+    int nr_files = 0, index = 0, copiedBytes = 0;
 
-    headerRead = readHeader(tarFile, &header, &nr_files);
-    
-    if (headerRead == -1) { return (EXIT_FAILURE); }
-
-    /*
-    int long offset = sizeof(stHeaderEntry)*nr_files;
-
-    fseek(outputFile, stHeaderBytes, SEEK_SET); // Move Outputfile pointer to the "data" section (leaving space for the header we'll write at the end of this function)
-
-    for (index = 0; index < nr_files; index++) {
-        int totalBytes = 0, nBytes = header->size, readByte;
-        while((totalBytes < nBytes) && ((readByte = getc(tarFile)) != EOF)) {
-            putc(readByte,stdout);
-            totalBytes++;
-        }
-        header++;
+    if((tarFile = fopen(tarName, "r") ) == NULL) {
+        printf("Yo! %s file doesn't exit \n", tarName);
+        return (EXIT_FAILURE); // File doesn't exit or there was a problem
     }
-    */
+
+    if (readHeader(tarFile, &stHeader, &nr_files) == -1) {
+        printf("We couldn't load the header \n");
+        return (EXIT_FAILURE); 
+    } // Returns the number of files + an array of struct with size/name for each file
+
+    // Write in each file the data (text)
+    for (index = 0; index < nr_files; index++) {
+
+        if ((destinationFile = fopen(stHeader[index].name, "w")) == NULL) { return EXIT_FAILURE; } // Try to open the output file | return error if we couldn't create the file
+        else {
+            copiedBytes = copynFile(tarFile, destinationFile, stHeader[index].size); // Write nBytes to the output file (where nBytes is obtained when reading the .mtar header)
+        }  // copied nBytes to output file
+        
+        if(fclose(destinationFile) != 0) { return EXIT_FAILURE; } // close the file
+    }
+    
+    // DEBUG STUFF
+    printf("Number of files is %d\n", nr_files);
+    for (index = 0; index <nr_files;index++) {
+        printf("Filename is %s and size is %u \n", stHeader[index].name, stHeader[index].size);
+    }
+    
+    // FREE MEMORY
+
+    for (index = 0; index <nr_files; index++) {
+        free(stHeader[index].name);
+    }
+
+    free(stHeader); // Delete main struct
 
 	return (EXIT_SUCCESS);
 }
