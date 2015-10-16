@@ -5,7 +5,7 @@
 #include "mytar.h"
 
 extern char *use;
-const int DEVELOPING = 0; // 1 = prints all the debug stuff on console
+const int DEVELOPING = 1; // 1 = prints all the debug stuff on console
 
 /** Copy nBytes from the origin file to the destination file.
  *
@@ -31,6 +31,7 @@ copynFile(FILE * origin, FILE * destination, int nBytes)
     while((totalBytes < nBytes) && (readByte = getc(origin)) != EOF) { // && (ferror(origin) == 0)) {
         if ((ferror(origin) != 0)) { return -1; } // There is an erro
         outputByte = putc(readByte, destination);
+        if (outputByte == EOF) { return -1; } // exists because wasn't possible to read a valid value
         totalBytes++;
     }
 
@@ -170,13 +171,19 @@ createTar(int nFiles, char *fileNames[], char tarName[])
         } // Try to open the file. EXIT_FAILURE will be returned if errors
 
         copiedBytes = copynFile(inputFile, outputFile, INT_MAX); // Copy N bytes to the output file (INT_MAX == huge number to ensure you copy all the character)
-
-        stHeader[index].size = copiedBytes; // Set the size from the copiedBytes for each struct.
-        stHeader[index].name = malloc(sizeof(fileNames[index]) + 1); // Heap space for the name char + '\0' character
-        strcpy(stHeader[index].name, fileNames[index]); // Copy one string to the struct entry
-
-        if (DEVELOPING == 1) printf("File %s size is %d bytes\n", stHeader[index].name, stHeader[index].size);
-        if (fclose(inputFile) == EOF) return EXIT_FAILURE; // Wasn't possible to close the file. Return and error
+    
+    if (copiedBytes == -1) {
+        if (DEVELOPING == 1) printf("Copied bytes in the create tar is: %d\n", copiedBytes);        
+        return EXIT_FAILURE;    
+    }
+    else {
+            stHeader[index].size = copiedBytes; // Set the size from the copiedBytes for each struct.
+            stHeader[index].name = malloc(sizeof(fileNames[index]) + 1); // Heap space for the name char + '\0' character
+            strcpy(stHeader[index].name, fileNames[index]); // Copy one string to the struct entry
+        if (DEVELOPING == 1) printf("File %s size is %d bytes\n", stHeader[index].name, stHeader[index].size);  
+    }        
+    
+    if (fclose(inputFile) == EOF) return EXIT_FAILURE; // Wasn't possible to close the file. Return and error
     }
      
     // Now move the file pointer to the beggining of the file in order to write: number of files + the header for each file
@@ -205,6 +212,8 @@ createTar(int nFiles, char *fileNames[], char tarName[])
     free(stHeader); // Free the struct created in heap
 
     if (fclose(outputFile) == EOF) { return (EXIT_FAILURE); } // Try close file. Return an error if wasn't possible
+
+    printf("mtar file created successfully\n");
 
     return (EXIT_SUCCESS);
 }
@@ -247,8 +256,9 @@ extractTar(char tarName[])
 
         if ((destinationFile = fopen(stHeader[index].name, "w")) == NULL) { return EXIT_FAILURE; } // Try to open the output file | return error if we couldn't create the file
         else {
-            copiedBytes = copynFile(tarFile, destinationFile, stHeader[index].size); // Write nBytes to the output file (where nBytes is obtained when reading the .mtar header)
-        }  // copied nBytes to output file
+            copiedBytes = copynFile(tarFile, destinationFile, stHeader[index].size); // Write nBytes to the output file (where nBytes is obtained when reading the .mtar header)        
+        if (copiedBytes == -1) { return EXIT_FAILURE; }     
+    }  // copied nBytes to output file
         
         if(fclose(destinationFile) != 0) { return EXIT_FAILURE; } // close the file
     }
@@ -268,6 +278,124 @@ extractTar(char tarName[])
     }
 
     free(stHeader); // Delete main struct
+    if (fclose(tarFile) == EOF) { return (EXIT_FAILURE); } // Try close file. Return an error if wasn't possible
 
-	return (EXIT_SUCCESS);
+    return (EXIT_SUCCESS);
+}
+
+// Advance part
+// extractTarDirectory: extract the files for the tarname
+// in a given directory
+
+int extractTarDirectory(char* tarName,char* directory) {
+    
+    char *filepath = malloc(strlen(directory) + 1 + strlen(tarName) + 2);
+    filepath = strcpy(filepath, directory);
+    filepath = strcat(filepath, "/");
+    filepath = strcat(filepath, tarName);
+
+    if(DEVELOPING == 1) printf("Filepath is %s \n", filepath);
+ 
+    // First check if the directory exists.
+    if (0 != access(directory, F_OK)) {
+        if(DEVELOPING == 1) printf("Can't create file at %s\n", directory);
+        return EXIT_FAILURE;
+    }
+    
+    // At this point we know the directory exists.
+    // So create a file
+
+    if(DEVELOPING == 1) printf("Oh yes. The directory exists :-)\n");
+
+    FILE *tarFile = NULL; // file manager
+    stHeaderEntry *stHeader; // Array of structs for header
+    int nr_files = 0, index = 0, copiedBytes = 0;
+
+    if((tarFile = fopen(tarName, "r")) == NULL) {
+        if(DEVELOPING == 1) printf("Yo! %s file doesn't exit \n", tarName);
+        return (EXIT_FAILURE); // File doesn't exit or there was a problem
+    }
+
+    if (readHeader(tarFile, &stHeader, &nr_files) == -1) {
+        if(DEVELOPING == 1) printf("We couldn't load the header \n");
+        return (EXIT_FAILURE); 
+    } // Returns in stHeader the array of struct (name/size) for each file and in nr_files the total num of files in the .mtar
+
+    // Write the content to the outputFile
+
+    for (index = 0; index < nr_files; index++) {
+    
+        char *destFilename = malloc(strlen(directory) + 1 + strlen(tarName) + 2);
+        destFilename = strcpy(filepath, directory);
+        destFilename = strcat(filepath, "/");
+        destFilename = strcat(filepath, stHeader[index].name);
+        
+        FILE *destinationFile = NULL;
+
+        if ((destinationFile = fopen(destFilename, "w")) == NULL) { return EXIT_FAILURE; } // Try to open the output file | return error if we couldn't create the file
+        else {
+            copiedBytes = copynFile(tarFile, destinationFile, stHeader[index].size); // Write nBytes to the output file (where nBytes is obtained when reading the .mtar header)        
+            if (copiedBytes == -1) { return EXIT_FAILURE; }     
+        }  // copied nBytes to output file
+    
+        if(fclose(destinationFile) != 0) { return EXIT_FAILURE; } // close the file
+    }
+    
+    if (fclose(tarFile) == EOF) { return (EXIT_FAILURE); } // Try close file. Return an error if wasn't possible
+
+    if (DEVELOPING == 1) printf("Yeah. Extract a directory\n");
+    return 0;
+}
+
+// ListTar: print on the screen pairs (filename, filesize)
+// found in an mtar archive
+
+int listTar(char* tarName) {
+    
+    FILE *tarFile = NULL; // file manager
+    stHeaderEntry *stHeader; // Array of structs for header
+    int nr_files = 0, index = 0;
+
+    if((tarFile = fopen(tarName, "r") ) == NULL) {
+        if(DEVELOPING == 1) printf("Yo! %s file doesn't exit \n", tarName);
+        return (EXIT_FAILURE); // File doesn't exit or there was a problem
+    }
+    
+    if (readHeader(tarFile, &stHeader, &nr_files) == -1) {
+        if(DEVELOPING == 1) printf("We couldn't load the header \n");
+        return (EXIT_FAILURE); 
+    } // Returns in stHeader the array of struct (name/size) for each file and in nr_files the total num of files in the .mtar
+    
+
+    /***
+    
+        INSERTION ALGORITHM
+
+    **/
+
+    stHeaderEntry aux;
+    int n = nr_files, c, d;
+
+
+    for (c = 1 ; c <= n - 1; c++) {
+        d = c;
+
+        while ( d > 0 && stHeader[d].size > stHeader[d-1].size) {
+            aux           = stHeader[d];
+            stHeader[d]   = stHeader[d-1];
+            stHeader[d-1] = aux;
+
+            d--;
+        }
+    }
+
+    printf("Sorted list in ascending order:\n");
+        printf("Number of files is %d\n", nr_files);
+
+        for (index = 0; index <nr_files;index++) {
+            printf("File name: %s, size is %d bytes\n", stHeader[index].name, stHeader[index].size);
+        }
+
+    if (DEVELOPING == 1) printf("Yeah. Print the pairs (filename, filesize)\n");
+    return 0;
 }

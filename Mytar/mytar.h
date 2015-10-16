@@ -7,7 +7,8 @@ typedef enum{
   NONE,
   ERROR,
   CREATE,
-  EXTRACT
+  EXTRACT,
+  LIST
 } flags;
 
 typedef struct {
@@ -17,6 +18,8 @@ typedef struct {
 
 int createTar(int nFiles, char *fileNames[], char tarName[]);
 int extractTar(char tarName[]);
+int extractTarDirectory(char* tarName,char* directory);
+int listTar(char* tarName);
 
 
 #endif /* _MYTAR_H */
