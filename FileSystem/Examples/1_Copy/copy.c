@@ -11,6 +11,9 @@ int main(int argc, char *argv[]) {
 	int fd_source, fd_dest;		// File descriptors
 	int nbytes;
 
+	printf("%d\n", argc);
+	printf("%s\n", argv[1]);
+
 	// The number of arguments in the command line is correct?
 	if ((argc < 3) || (argc > 4))  {
 		fprintf(stderr, "Usage: %s source destination [BLOCK_SIZE]\n", argv[0]);
@@ -18,6 +21,7 @@ int main(int argc, char *argv[]) {
 	}
 
 	// Selection of the block size, as the transfer unit
+	// atoi convers ascii to integer
 	size = (argc == 4) ? atoi(argv[3]) : sizeof(buffer);
 	// Test: the block size cannot be neither negative
 	//		nor greater than the maximum value reserved for 'buffer'
