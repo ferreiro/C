@@ -14,75 +14,35 @@
  * NEW: MyUNlink function
 */ 
 
-static int my_unlink(const char *fileName) {
+int my_unlink(const char *filename) {
+	int size = strlen(filename) + 1; // one for the null termination
+	char copiedFilename[size]; // Make a copy. Because the parameter is constant, so I can not pass it to the findByname function.
 	
-	int fileIndexDirectory = findFileByName(&myFileSystem, fileName); // Index of the file in the directory.
+	//char filenameCopy[strlen(filename) + 1]; // Make a copy. Because the parameter is constant, so I can not pass it to the findByname function.
+	strncpy(copiedFilename, filename, size-1);
 	
-	if (fileIndexDirectory == -1) {
-		fprintf(stderr, "El archivo no se encuentra en el directorio. %s\n", fileName);
-		return -1;
+	fprintf(stderr, "Hola. EL tamaño es %d", size);
+	fprintf(stderr, "El nombre del archivo copiado es %s", copiedFilename);
+	
+	int fileIndex = findFileByName(&myFileSystem, copiedFilename); // Index of the file in the directory.
+	fprintf(stderr, "FIle index is: %d\n", fileIndex);
+	
+	if (fileIndex == -1) {
+		fprintf(stderr, "File wasn't found on the directory entry\n");
+		return -1; // File wasn't found on the directory entry
 	}
 	
-	// Acceder al array del directoyio.
-	int nodeIdx = myFileSystem.directory[fileIndexDirectory].nodeIdx; // Node index for 
-	fprintf(stderr, "Índice del nodo en el directorio es: %d\n", nodeIdx);
-	
+	//printf("%zu", strlen(filename));
 	return 0;
 }
 
-
 /**
- * NEW: My_read function
  * 
- * read(int *) 
- * First parameter: the file’s path name.
- * Second parameter: the user buffer used to store bytes read from the file
- * Third parameter: the number of bytes to read
- * Four parameter: location of the file’s position indicator
- * Fifth parameter: structure that represents the open file in FUSE.
-*/
-static int my_read(const char *path, const char *buf, size_t size, off_t offset, struct fuse_file_info *fi) {
-	char buffer[BLOCK_SIZE_BYTES];
-	int bytes2Read = size, totalWrite = 0;
-	NodeStruct *node = myFileSystem.nodes[fi->fh];
+ * 
+ **/
 
-	fprintf(stderr, "--->>>my_read: path %s, size %zu, offset %jd, fh %"PRIu64"\n", path, size, (intmax_t)offset, fi->fh);
-
-	// Read data
-	while(bytes2Read) {
-		int i;
-		int currentBlock, offBloque;
-		currentBlock = node->blocks[offset / BLOCK_SIZE_BYTES];
-		offBloque = offset % BLOCK_SIZE_BYTES;
-
-		if((lseek(myFileSystem.fdVirtualDisk, currentBlock * BLOCK_SIZE_BYTES, SEEK_SET) == (off_t) - 1) ||
-		        (read(myFileSystem.fdVirtualDisk, &buffer, BLOCK_SIZE_BYTES) == -1)) {
-			perror("Failed lseek/read in my_write");
-			return -EIO;
-		}
-
-		for(i = offBloque; (i < BLOCK_SIZE_BYTES) && (totalWrite < size); i++) {
-			buffer[i] = buf[totalWrite++];
-		}
-
-		if((lseek(myFileSystem.fdVirtualDisk, currentBlock * BLOCK_SIZE_BYTES, SEEK_SET) == (off_t) - 1) ||
-		        (write(myFileSystem.fdVirtualDisk, &buffer, BLOCK_SIZE_BYTES) == -1)) {
-			perror("Failed lseek/write in my_write");
-			return -EIO;
-		}
-
-		// Discont the written stuff
-		bytes2Read -= (i - offBloque);
-		offset += i;
-	}
-	sync();
-	
-	node->modificationTime = time(NULL);
-	updateSuperBlock(&myFileSystem);
-	updateBitmap(&myFileSystem);
-	updateNode(&myFileSystem, fi->fh, node);
-
-	return size;
+int my_read(const char *path, char *buf, size_t size, off_t offset, struct fuse_file_info *fi) {
+	return 0;
 }
 
 /**
@@ -549,12 +509,12 @@ struct fuse_operations myFS_operations = {
 	.getattr	= my_getattr,					// Obtain attributes from a file
 	.readdir	= my_readdir,					// Read directory entries
 	.truncate	= my_truncate,					// Modify the size of a file
-	.open		= my_open,						// Open a file
+	.open		= my_open,						// Oeen a file
 	.write		= my_write,						// Write data into a file already opened
 	.release	= my_release,					// Close an opened file
 	.mknod		= my_mknod,						// Create a new file
 	
-	.unlink     = my_unlink,					// NEW Method: delete a file
-	.read       = my_read,						// NEW Method: read a file.
+	.read 		= my_read,						// NEW!: Read file text.
+	.unlink		= my_unlink,					// NEW!: Delete a file text 
 };
 
