@@ -66,7 +66,6 @@ typedef struct MyFileSystemStructure {
 	int numFreeNodes;                  // # of available inodes
 } MyFileSystem;
 
-
 /**
  * @brief Copies the content from one node to another
  *

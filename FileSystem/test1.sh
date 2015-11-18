@@ -6,7 +6,7 @@ rm -R -f test
 mkdir test
 
 echo 'file 1' > ./test/file1.txt
-echo "Copying file 1"
+echo "Copying file 1 into this directory"
 cp ./test/file1.txt $MPOINT/
 read -p "Press enter..."
 

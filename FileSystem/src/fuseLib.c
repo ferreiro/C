@@ -11,6 +11,81 @@
 #include <linux/kdev_t.h>
 
 /**
+ * NEW: MyUNlink function
+*/ 
+
+static int my_unlink(const char *fileName) {
+	
+	int fileIndexDirectory = findFileByName(&myFileSystem, fileName); // Index of the file in the directory.
+	
+	if (fileIndexDirectory == -1) {
+		fprintf(stderr, "El archivo no se encuentra en el directorio. %s\n", fileName);
+		return -1;
+	}
+	
+	// Acceder al array del directoyio.
+	int nodeIdx = myFileSystem.directory[fileIndexDirectory].nodeIdx; // Node index for 
+	fprintf(stderr, "Índice del nodo en el directorio es: %d\n", nodeIdx);
+	
+	return 0;
+}
+
+
+/**
+ * NEW: My_read function
+ * 
+ * read(int *) 
+ * First parameter: the file’s path name.
+ * Second parameter: the user buffer used to store bytes read from the file
+ * Third parameter: the number of bytes to read
+ * Four parameter: location of the file’s position indicator
+ * Fifth parameter: structure that represents the open file in FUSE.
+*/
+static int my_read(const char *path, const char *buf, size_t size, off_t offset, struct fuse_file_info *fi) {
+	char buffer[BLOCK_SIZE_BYTES];
+	int bytes2Read = size, totalWrite = 0;
+	NodeStruct *node = myFileSystem.nodes[fi->fh];
+
+	fprintf(stderr, "--->>>my_read: path %s, size %zu, offset %jd, fh %"PRIu64"\n", path, size, (intmax_t)offset, fi->fh);
+
+	// Read data
+	while(bytes2Read) {
+		int i;
+		int currentBlock, offBloque;
+		currentBlock = node->blocks[offset / BLOCK_SIZE_BYTES];
+		offBloque = offset % BLOCK_SIZE_BYTES;
+
+		if((lseek(myFileSystem.fdVirtualDisk, currentBlock * BLOCK_SIZE_BYTES, SEEK_SET) == (off_t) - 1) ||
+		        (read(myFileSystem.fdVirtualDisk, &buffer, BLOCK_SIZE_BYTES) == -1)) {
+			perror("Failed lseek/read in my_write");
+			return -EIO;
+		}
+
+		for(i = offBloque; (i < BLOCK_SIZE_BYTES) && (totalWrite < size); i++) {
+			buffer[i] = buf[totalWrite++];
+		}
+
+		if((lseek(myFileSystem.fdVirtualDisk, currentBlock * BLOCK_SIZE_BYTES, SEEK_SET) == (off_t) - 1) ||
+		        (write(myFileSystem.fdVirtualDisk, &buffer, BLOCK_SIZE_BYTES) == -1)) {
+			perror("Failed lseek/write in my_write");
+			return -EIO;
+		}
+
+		// Discont the written stuff
+		bytes2Read -= (i - offBloque);
+		offset += i;
+	}
+	sync();
+	
+	node->modificationTime = time(NULL);
+	updateSuperBlock(&myFileSystem);
+	updateBitmap(&myFileSystem);
+	updateNode(&myFileSystem, fi->fh, node);
+
+	return size;
+}
+
+/**
  * @brief Modifies the data size originally reserved by an inode, reserving or removing space if needed.
  *
  * @param idxNode inode number
