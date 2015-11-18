@@ -474,9 +474,12 @@ struct fuse_operations myFS_operations = {
 	.getattr	= my_getattr,					// Obtain attributes from a file
 	.readdir	= my_readdir,					// Read directory entries
 	.truncate	= my_truncate,					// Modify the size of a file
-	.open		= my_open,						// Oeen a file
+	.open		= my_open,						// Open a file
 	.write		= my_write,						// Write data into a file already opened
 	.release	= my_release,					// Close an opened file
 	.mknod		= my_mknod,						// Create a new file
+	
+	.unlink     = my_unlink,					// NEW Method: delete a file
+	.read       = my_read,						// NEW Method: read a file.
 };
 
