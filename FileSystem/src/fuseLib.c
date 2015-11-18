@@ -10,21 +10,64 @@
 #include <inttypes.h>
 #include <linux/kdev_t.h>
 
-/**
- * NEW: MyUNlink function
-*/ 
+
+/****************************************
+ * AUXILIAR FUNCION TO PRINT STUFF 
+****************************************/
+
+void printFileStruct(FileStruct fs) {
+	fprintf(stderr, "\t\t Filename: %s | NodeIDx: %d | Free file: %d\n", fs.fileName, fs.nodeIdx, fs.freeFile);
+}
+
+void printDirectory(DirectoryStruct direct) {
+	fprintf(stderr, "\n\t ***** Directory *****\n\n");
+	fprintf(stderr, "\tNumber of files: %d \n\n", direct.numFiles);
+	int i = 0;
+	for (i = 0; i < MAX_FILES_PER_DIRECTORY; i++) {
+		fprintf(stderr, "\t %d FileStruct\n", i);
+		printFileStruct(direct.files[i]);
+	}
+}
+
+void printMyFileSYstem() { 
+	fprintf(stderr, "FIle system descriptor: %d\n", myFileSystem.fdVirtualDisk);
+}
+
+/****************************************
+ * NEW FUNCTIONS FOR THE BASIC PART
+****************************************/
+
+// My unlink function: delete one file from the filesystem.
 
 int my_unlink(const char *filename) {
-	int size = strlen(filename) + 1; // one for the null termination
-	char copiedFilename[size]; // Make a copy. Because the parameter is constant, so I can not pass it to the findByname function.
 	
+	int size = strlen(filename); // one for the null termination
+	char newFilename[size]; // Make a copy. Because the parameter is constant, so I can not pass it to the findByname function.
+	
+	fprintf(stderr, "Tamaño filename: %d\n", size);
+	
+	int i = 0, j =0;
+	while (i < strlen(filename)) {
+		if (i == 0 && filename[i] == '/') {
+				// SKip the / at the beggining of filenames (/file1.txt)
+		}
+		else {
+			newFilename[j] = filename[i];
+			j++;
+			fprintf(stderr, "%c", filename[i]);
+		}
+		i++;
+	} 
+	
+	// printDirectory(myFileSystem.directory); // only for debugging
+	 
 	//char filenameCopy[strlen(filename) + 1]; // Make a copy. Because the parameter is constant, so I can not pass it to the findByname function.
-	strncpy(copiedFilename, filename, size-1);
+	// strncpy(copiedFilename, filename, size);
+	//copiedFilename[size-1] = '\0';
 	
-	fprintf(stderr, "Hola. EL tamaño es %d", size);
-	fprintf(stderr, "El nombre del archivo copiado es %s", copiedFilename);
+	fprintf(stderr, "El nombre del archivo copiado es %s\n", newFilename);
 	
-	int fileIndex = findFileByName(&myFileSystem, copiedFilename); // Index of the file in the directory.
+	int fileIndex = findFileByName(&myFileSystem, newFilename); // Index of the file in the directory.
 	fprintf(stderr, "FIle index is: %d\n", fileIndex);
 	
 	if (fileIndex == -1) {
