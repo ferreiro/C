@@ -74,7 +74,7 @@ void printMyFileSYstem() {
 int my_unlink(const char *filename) {
 	
 	
-	printDirectory(myFileSystem.directory); // DEBUG stuff only for debugging
+	// printDirectory(myFileSystem.directory); // DEBUG stuff only for debugging
 	
 	/***** Copiar filename sin '/' en una nueva variable para 
 	 ***** poder pasarla a findFileByNAme (que no admite strings constantes) ****/
@@ -104,9 +104,9 @@ int my_unlink(const char *filename) {
 	/** Si está, liberar el archivo y poner el nombre a empty **/
 	/** OJO! NO hay que tocar nodeIdx... **/
 	
-	int nodeIndex = findFileByName(&myFileSystem, newFilename); // NodeIDx índice que ocupa un nodo en el array de nodos
+	int nodeIndexDir = findFileByName(&myFileSystem, newFilename); // NodeIDx índice que ocupa un nodo en el array de nodos
 	 
-	if (nodeIndex == -1) {
+	if (nodeIndexDir == -1) {
 		fprintf(stderr, "File wasn't found on the directory entry\n");  
 		return -1; // File is not on the directory.
 	}
@@ -114,37 +114,36 @@ int my_unlink(const char *filename) {
 	// FILE to erase is on the directory. Free the directory entry.
 	
 	myFileSystem.directory.numFiles -= 1; // Decrementar numero de archivos en el directorio.
-	myFileSystem.directory.files[nodeIndex].freeFile = true; // Put the node in directory as free.
-	strcpy(myFileSystem.directory.files[nodeIndex].fileName, "\0"); // Erased the title to empty array.
-	
-	printDirectory(myFileSystem.directory); // DEBUG: Print directory after erasing node.
+	myFileSystem.directory.files[nodeIndexDir].freeFile = true; // Put the node in directory as free.
+	strcpy(myFileSystem.directory.files[nodeIndexDir].fileName, "\0"); // Erased the title to empty array.
+
+	int nodeIdx = myFileSystem.directory.files[nodeIndexDir].nodeIdx; // Hacer una copia de nodoIDx del directorio que nos sirve para acceder al array de nodos.
+ 
+	// printDirectory(myFileSystem.directory); // DEBUG: Print directory after erasing node.
 	 
-	/** 2. Buscar posición del archivo en el array de Nodos **/
-	
-	/************************
-	 *	Esto es necesario??? 
-	*************************/
-	
-	int inodeLocation = findNodeByPos(nodeIndex); // Given a node index in the array of nodes
-	fprintf(stderr, "nodeIndex is %d\n", nodeIndex);
-	
-	if (inodeLocation < 0) {
-		fprintf(stderr, "\t NO se calculó correctamente la posición del inode. Resultado: %d\n", inodeLocation);
-		return -1;
-	}
-	
-	fprintf(stderr, "Inode location is %d\n", inodeLocation);
-	
-	myFileSystem.nodes[nodeIndex] = NULL; // Delete the note from the node's array.
+	/** 2. Borrar datos y liberar nodo usando el nodeIdx obtenido del directorio **/
+
 	myFileSystem.numFreeNodes += 1; // Increase the number of free nodes by 1 because e erased one.
-	
-	// Poner a 0 nodeIdx de FIlestruct (ya que acabamos de borrar su estructura).
-	myFileSystem.directory.files[nodeIndex].nodeIdx = 0;
-	
-	fprintf(stderr, "%s file deleted \n", newFilename);  
+	myFileSystem.bitMap[nodeIdx] = 0; // Marcar bitmap como libre
  	
- 	printDirectory(myFileSystem.directory); // DEBUG stuff only for debugging
- 	
+ 	/**********************************************
+ 	 * 	Se podría poner unicamente a NULL? Es peor?
+ 	 **********************************************/
+ 	 
+	myFileSystem.nodes[nodeIdx]->numBlocks=0;
+	myFileSystem.nodes[nodeIdx]->fileSize=0;
+	myFileSystem.nodes[nodeIdx]->freeNode=true; // Delete the note from the node's array.
+
+ 	/**********************************************
+ 	 * 	NUumOffREEbLOCKS de SUperblock también se tiene que actualizar.
+ 	 **********************************************/
+ 	 
+ 	myFileSystem.numFreeNodes -= 1;
+ 	  
+ 	//printAllNodes(myFileSystem.nodes);
+ 	//printDirectory(myFileSystem.directory); // DEBUG stuff only for debugging
+
+	fprintf(stderr, "\n Congrats!!! %s file deleted \n", newFilename);
  	
 	return 0;
 }
