@@ -20,8 +20,9 @@ void copyNode(NodeStruct *dest, NodeStruct *src) {
 
 int findFileByName(MyFileSystem *myFileSystem, char *fileName) {
 	int i;
-
+	 
 	for(i = 0; i < MAX_FILES_PER_DIRECTORY; i++) {
+		// fprintf(stderr, "Nombre %s, tamaño %zu \n", myFileSystem->directory.files[i].fileName, strlen(myFileSystem->directory.files[i].fileName));
 		if(myFileSystem->directory.files[i].freeFile == false) {
 			if(strcmp(fileName, myFileSystem->directory.files[i].fileName) == 0)
 				return i;

@@ -16,7 +16,10 @@
 ****************************************/
 
 void printFileStruct(FileStruct fs) {
-	fprintf(stderr, "\t\t Filename: %s | NodeIDx: %d | Free file: %d\n", fs.fileName, fs.nodeIdx, fs.freeFile);
+	fprintf(stderr, "\t\t Filename:");
+	fprintf(stderr, " %s |", fs.fileName);
+	fprintf(stderr, " NodeIDx: %d |", fs.nodeIdx);
+	fprintf(stderr, " Free file: %d\n", fs.freeFile);
 }
 
 void printDirectory(DirectoryStruct direct) {
@@ -29,10 +32,30 @@ void printDirectory(DirectoryStruct direct) {
 	}
 }
 
+void printNodeStruct(NodeStruct *ns) {
+	fprintf(stderr, "\n\t ***** NODES *****\n\n");
+	fprintf(stderr, "NumBlocks: %d \n", ns->numBlocks);
+	fprintf(stderr, "FileSIze: %d \n", ns->fileSize);
+	fprintf(stderr, "Modification Time: %lld \n", ns->modificationTime);
+	int i = 0;
+	for (i = 0; i < MAX_BLOCKS_PER_FILE; i++) {
+		fprintf(stderr, "Block %d | ", ns->blocks[i]);
+	}
+	fprintf(stderr, "\n Free Node: %d \n", ns->freeNode);
+}
+void printNodes(NodeStruct nodes[MAX_NODES]) {
+	int i = 0;
+	int insertedNotes = MAX_NODES - myFileSystem.numFreeNodes;
+	fprintf(stderr, "\n\t ***** NODES *****\n");
+	for (i = 0; i < insertedNotes; i++) {
+		printNodeStruct(nodes[i]);
+	}
+}
+
 void printMyFileSYstem() { 
 	fprintf(stderr, "FIle system descriptor: %d\n", myFileSystem.fdVirtualDisk);
 }
-
+ 
 /****************************************
  * NEW FUNCTIONS FOR THE BASIC PART
 ****************************************/
@@ -41,41 +64,94 @@ void printMyFileSYstem() {
 
 int my_unlink(const char *filename) {
 	
+	// DEBUG 
+	printDirectory(myFileSystem.directory); // DEBUG stuff only for debugging
+	
+	/***** Copiar filename sin '/' en una nueva variable
+	 * 	para poder pasarla a findFileByNAme (que no admite strings constantes) ****/
+	
+	int i=0, j=0;
 	int size = strlen(filename); // one for the null termination
-	char newFilename[size]; // Make a copy. Because the parameter is constant, so I can not pass it to the findByname function.
+	char newFilename[size-1]; // Make a copy. Because the parameter is constant, so I can not pass it to the findByname function.
 	
-	fprintf(stderr, "Tamaño filename: %d\n", size);
+	//fprintf(stderr, "Tamaño filename: %d\n", size);
 	
-	int i = 0, j =0;
 	while (i < strlen(filename)) {
 		if (i == 0 && filename[i] == '/') {
-				// SKip the / at the beggining of filenames (/file1.txt)
+			// SKip / at the beggining of filenames (/file1.txt)
 		}
 		else {
 			newFilename[j] = filename[i];
-			j++;
-			fprintf(stderr, "%c", filename[i]);
+			j++; // newFIlename COunter 
+			//DEBUG fprintf(stderr, "%c", filename[i]);
 		}
 		i++;
 	} 
 	
-	// printDirectory(myFileSystem.directory); // only for debugging
+	newFilename[size-1] = '\0'; // Set the end of string character
+	// fprintf(stderr, "El nombre del archivo copiado es %s\n", newFilename);
+
+	/** 1. Buscar si el archivo está en nuestro directorio **/
+	/** Si está, liberar el archivo y poner el nombre a empty **/
+	/** OJO! NO hay que tocar nodeIdx... **/
+	
+	int nodeIndex = findFileByName(&myFileSystem, newFilename); // NodeIDx índice que ocupa un nodo en el array de nodos
 	 
-	//char filenameCopy[strlen(filename) + 1]; // Make a copy. Because the parameter is constant, so I can not pass it to the findByname function.
-	// strncpy(copiedFilename, filename, size);
-	//copiedFilename[size-1] = '\0';
-	
-	fprintf(stderr, "El nombre del archivo copiado es %s\n", newFilename);
-	
-	int fileIndex = findFileByName(&myFileSystem, newFilename); // Index of the file in the directory.
-	fprintf(stderr, "FIle index is: %d\n", fileIndex);
-	
-	if (fileIndex == -1) {
-		fprintf(stderr, "File wasn't found on the directory entry\n");
-		return -1; // File wasn't found on the directory entry
+	if (nodeIndex == -1) {
+		fprintf(stderr, "File wasn't found on the directory entry\n");  
+		return -1; // File is not on the directory.
 	}
 	
-	//printf("%zu", strlen(filename));
+	// FILE to erase is on the directory. Free the directory entry.
+	
+	myFileSystem.directory.numFiles -= 1; // Decrementar numero de archivos en el directorio.
+	myFileSystem.directory.files[nodeIndex].freeFile = true; // Put the node in directory as free.
+	strcpy(myFileSystem.directory.files[nodeIndex].fileName, "\0"); // Erased the title to empty array.
+	
+	printDirectory(myFileSystem.directory); // DEBUG: Print directory after erasing node.
+	 
+	/** 2. Buscar posición del archivo en el array de Nodos **/
+	
+	fprintf(stderr, "nodeIndex is %d\n", nodeIndex);
+	int inodeLocation = findNodeByPos(nodeIndex); // Given a node index in the array of nodes
+	
+	if (inodeLocation < 0) {
+		fprintf(stderr, "\t NO se calculó correctamente la posición del inode. Resultado: %d\n", inodeLocation);
+		return -1;
+	}
+	
+	fprintf(stderr, "Inode location is %d\n", inodeLocation);
+	myFileSystem.numFreeNodes += 1; // Increase the number of free nodes by 1 because e erased one.
+	
+	// debug: print the node struct for the to delete node
+	//printNodeStruct(myFileSystem.nodes[inodeLocation]);
+	
+	fprintf(stderr, "IS free node 0? %d\n", myFileSystem.nodes[0]->freeNode);
+	fprintf(stderr, "IS free node 1? %d\n", myFileSystem.nodes[1]->freeNode);
+	fprintf(stderr, "IS free node 2 ? %d\n", myFileSystem.nodes[2]->freeNode);
+	fprintf(stderr, "IS free node 3 ? %d\n", myFileSystem.nodes[3]->freeNode);
+	/************************** 
+	 * 
+	 * 
+	 * AQUÍ USO EL inodeLocation o el nodeIndex?
+	 * 
+	 * 
+	****/
+	//myFileSystem.nodes[inodeLocation]->freeNode = true; // Free the node.
+	//myFileSystem.nodes[inodeLocation]->modificationTime = time(NULL); // Update modification time with current time
+	
+	//myFIleSystem->nodes[inodeLocation].modificationTime = time(NULL);
+	
+	// debug: print the node struct for the to delete node
+	//printNodeStruct(myFileSystem.nodes[inodeLocation]);
+	
+	//int nodeTotalBlocks = myFileSystem.nodes[inodeLocation]->numBlocks;
+	//int nodeFilesize	= myFileSystem.nodes[inodeLocation]->fileSize;
+	
+	// Erased the blocks used by the node. 
+	
+	// updateNode(MyFileSystem *myFileSystem, int nodeNum, NodeStruct *node);
+ 	
 	return 0;
 }
 
