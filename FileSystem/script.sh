@@ -34,8 +34,7 @@ cp ./src/fuseLib.c $TMP_DIRECTORY/  # copy into temp directory.
 #original files and those copied to the FS. Truncate the first file (man truncate) in the
 #temp folder and in your FS so as to reduce the file size in one block.
 
-# Check integrity
-./my-fsck $MPOINT
+./my-fsck $MPOINT # Check integrity
 
 $MPOINT/myFS.h > a
 $SRC/myFS.h > b
@@ -62,13 +61,13 @@ fi
 # truncate in one block
 
 truncatedFile=$MPOINT"/myFS.h"
+truncate(truncatedFile, 4096);
 echo $truncatedFile
-
-#truncate("./"+$MPOINT+"/myFS.h", 4096);
-#truncate("./"+$TMP_DIRECTORY+"/myFS.h", 4096);
 
 #(c) Check the integrity of the virtual disk again and perform a diff between the original
 #file and the truncated one.
+
+./my-fsck $MPOINT # Check integrity
 
 #(d) Copy a third text file into your FS.
 
@@ -81,6 +80,9 @@ echo $truncatedFile
 
 #(f) Truncate the second file in the temp folder and in your FS, so as to increase the file
 #size in one block.
+
+
+# ????????????????????????????????
 
 #(g) Check the integrity of the disk and perform a diff between the original file and the
 #truncated one.
