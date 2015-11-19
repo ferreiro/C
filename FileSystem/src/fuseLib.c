@@ -126,13 +126,24 @@ int my_unlink(const char *filename) {
 	myFileSystem.numFreeNodes += 1; // Increase the number of free nodes by 1 because e erased one.
 	myFileSystem.bitMap[nodeIdx] = 0; // Marcar bitmap como libre
  	
+ 	/**********************************************
+ 	 * 	Se podría poner unicamente a NULL? Es peor?
+ 	 **********************************************/
+ 	 
 	myFileSystem.nodes[nodeIdx]->numBlocks=0;
 	myFileSystem.nodes[nodeIdx]->fileSize=0;
 	myFileSystem.nodes[nodeIdx]->freeNode=true; // Delete the note from the node's array.
 
-	fprintf(stderr, "%s file deleted \n", newFilename);  
- 	printDirectory(myFileSystem.directory); // DEBUG stuff only for debugging
- 	printAllNodes(myFileSystem.nodes);
+ 	/**********************************************
+ 	 * 	NUumOffREEbLOCKS de SUperblock también se tiene que actualizar.
+ 	 **********************************************/
+ 	 
+ 	myFileSystem.numFreeNodes -= 1;
+ 	  
+ 	//printAllNodes(myFileSystem.nodes);
+ 	//printDirectory(myFileSystem.directory); // DEBUG stuff only for debugging
+
+	fprintf(stderr, "\n Congrats!!! %s file deleted \n", newFilename);
  	
 	return 0;
 }
