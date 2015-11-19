@@ -63,9 +63,7 @@ fi
 	fi
 
 	# Truncate the first file (man truncate) in the temp folder and in your FS so as to reduce the file size in one block.
-	truncate $TMP/$FILE1 --size=+4096
-	truncate $TMP/$FILE1 --size=+4096
-	truncate $TMP/$FILE1 --size=+4096
+	truncate --size=-4096 $TMP/$FILE1
 	echo "[TRUNCATED] File has been truncated"
 		# truncate -s 0 {$TMP/$FILE1}
 		# truncate("$TMP/$FILE1", 4096);

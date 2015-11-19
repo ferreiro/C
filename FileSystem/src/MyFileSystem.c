@@ -4,17 +4,18 @@
 #include <stdlib.h>
 #include <string.h>
 
-
 MyFileSystem myFileSystem;
 
-#define USAGE			"Usage: %s -t diskSize -a backupFileName -f 'fuse options'\n"
+#define USAGE		"Usage: %s -t diskSize -a backupFileName -f 'fuse options'\n"
 #define EXAMPLE		"Example:\n%s -t 2097152 -a virtual-disk -f '-d -s mount-point'\n"
 #define EXAMPLE2 	"Example:\n%s -m -a <virtual-disk> -f '-d -s mount-point'\n"
 
 int main(int argc, char **argv) {
 	myFileSystem.numFreeNodes = MAX_NODES;
-
+	
 	int ret; // Resulting code of the functions call
+	
+	fprintf(stderr, "\n\tNumero de nodos libres = %d\n\n", myFileSystem.numFreeNodes);
 
 	int opt, diskSize = -1;
 	char *backupFileName = NULL;
@@ -52,7 +53,11 @@ int main(int argc, char **argv) {
 			fprintf(stderr, EXAMPLE, argv[0]);
 			exit(-1);
 		}
-
+		
+		fprintf(stderr, "\t Disk SIze: %d\n", diskSize);
+		fprintf(stderr, "\t Backup filename: %s\n", backupFileName);
+		fprintf(stderr, "\n\t Desde MyFileSystem.c llamamos a myFkfs() para 'formatear' el sistema\n\n");
+ 		
 		// Format file without format?
 		ret = myMkfs(&myFileSystem, diskSize, backupFileName);
 	} else {

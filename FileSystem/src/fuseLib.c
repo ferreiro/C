@@ -10,7 +10,6 @@
 #include <inttypes.h>
 #include <linux/kdev_t.h>
 
-
 /****************************************
  * AUXILIAR FUNCION TO PRINT STUFF 
 ****************************************/
@@ -69,9 +68,14 @@ void printMyFileSYstem() {
  * NEW FUNCTIONS FOR THE BASIC PART
 ****************************************/
 
+int my_unlink(const char *filename) {
+	return 0;	
+}
+
+
 // My unlink function: delete one file from the filesystem.
 
-int my_unlink(const char *filename) {
+int my_unlinkTeacher(const char *filename) {
 	
 	
 	// printDirectory(myFileSystem.directory); // DEBUG stuff only for debugging
@@ -79,8 +83,8 @@ int my_unlink(const char *filename) {
 	/***** Copiar filename sin '/' en una nueva variable para 
 	 ***** poder pasarla a findFileByNAme (que no admite strings constantes) ****/
 	
-	int i=0, j=0;
-	char* fname=(char*)(filename+1);
+	int i=0;
+	char* fname=(char*)(filename+1); // Convert ffrom const char to char. Y también, quitar el primer character (/) sumando uno al puntero de filename (hace algoritimia de punteros.)
 		
 	
 	/** 1. Buscar si el archivo está en nuestro directorio **/

@@ -288,13 +288,10 @@ int readBitmap(MyFileSystem *myFileSystem)
 	return -1;
 }
 
-
-
 int readDirectory(MyFileSystem* myFileSystem)
 {
 	return -1;
 }
-
 
 int readSuperblock(MyFileSystem* myFileSystem)
 {
