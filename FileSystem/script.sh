@@ -4,7 +4,7 @@ TMP_DIRECTORY="./temp" # tmp directory for storing data inside
 MPOINT="./mount-point"
 SRC="./src"
  
-if [ d "$MPOINT" ]; then
+if [ $MPOINT ]; then
 	# Mount Directory exists. Removes files of the mount-point directory.
 	rm -r $MPOINT/*
 	echo "$MPOINT directory content deleted... [OK]"
@@ -13,7 +13,7 @@ else
 	mkdir $MPOINT # Create empty "MPOINT" directory
 fi
 
-if [ d "$TMP_DIRECTORY" ]; then
+if [ $TMP_DIRECTORY ]; then
 	# Temp Directory exists. Removes files of the mount-point directory.
 	rm -r $TMP_DIRECTORY/*
 	echo "$TMP_DIRECTORY directory content deleted... [OK]"
@@ -25,12 +25,10 @@ fi
 #(a) Copy two text files with size greater than 1 block (e.g., fuseLib.c and myFS.h) into the
 #FS as well as into a temp directory (./temp for instance) in the Linux’s file system.
 
-cp ./src/myFS.h $MPOINT/  # copy into tmp
-cp ./src/fuseLib.c $MPOINT/  # copy into directory
-
-cp ./src/myFS.h $TMP_DIRECTORY/  # copy into tmp
-cp ./src/fuseLib.c $TMP_DIRECTORY/  # copy into mount dir
-
+cp ./src/myFS.h $MPOINT/  			# copy into mount-point directory
+cp ./src/fuseLib.c $MPOINT/			# copy into directory
+cp ./src/myFS.h $TMP_DIRECTORY/  	# copy into tmp directory.
+cp ./src/fuseLib.c $TMP_DIRECTORY/  # copy into temp directory.
 
 #(b) Check the integrity of the virtual disk with my-fsck and perform a diff between the
 #original files and those copied to the FS. Truncate the first file (man truncate) in the
@@ -39,9 +37,11 @@ cp ./src/fuseLib.c $TMP_DIRECTORY/  # copy into mount dir
 # Check integrity
 ./my-fsck $MPOINT
 
-# Diffs.
-$MPOINT/myFS.h > a
-$SRC/myFS.h > b
+#$MPOINT/myFS.h > a
+#$SRC/myFS.h > b
+
+$SRC/myFS.h > a
+$MPOINT/myFS.h > b
 
 DIFFFIRST=$(diff a b)   # http://stackoverflow.com/questions/3611846/bash-using-the-result-of-a-diff-in-a-if-statement
 
