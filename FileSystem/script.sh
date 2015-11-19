@@ -37,11 +37,8 @@ cp ./src/fuseLib.c $TMP_DIRECTORY/  # copy into temp directory.
 # Check integrity
 ./my-fsck $MPOINT
 
-#$MPOINT/myFS.h > a
-#$SRC/myFS.h > b
-
-$SRC/myFS.h > a
-$MPOINT/myFS.h > b
+$MPOINT/myFS.h > a
+$SRC/myFS.h > b
 
 DIFFFIRST=$(diff a b)   # http://stackoverflow.com/questions/3611846/bash-using-the-result-of-a-diff-in-a-if-statement
 
@@ -63,8 +60,10 @@ else
 fi
 
 # truncate in one block
-truncatedFile="./"+$MPOINT+"/myFS.h"
-cout $truncatedFile
+
+truncatedFile=$MPOINT"/myFS.h"
+echo $truncatedFile
+
 #truncate("./"+$MPOINT+"/myFS.h", 4096);
 #truncate("./"+$TMP_DIRECTORY+"/myFS.h", 4096);
 
