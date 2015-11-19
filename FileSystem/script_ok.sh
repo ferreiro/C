@@ -28,8 +28,8 @@ cp $SRC/$FILE2 $MOUNT/$FILE2
 
 ./my-fsck virtual-disk
 
-DIFF_FILE1=$(diff $MOUNT/$FILE1 $TEMP/$FILE1) # See Link1 at bottom | Make diff
-DIFF_FILE2=$(diff $MOUNT/$FILE2 $TEMP/$FILE2) # See Link1 at bottom | Make diff
+DIFF_FILE1=$(diff $MOUNT/$FILE1 $TEMP/$FILE1) # Make diff | Diffs: http://unix.stackexchange.com/questions/33638/diff-several-files-true-if-all-not-equal
+DIFF_FILE2=$(diff $MOUNT/$FILE2 $TEMP/$FILE2)
 
 if [ "$DIFF_FILE1" == "" ]; 
 then echo "[EQUALS] First file copied are same in MOUNT and TEMP"
@@ -45,6 +45,52 @@ truncate --size=-4096 $TEMP/$FILE1
 truncate --size=-4096 $MOUNT/$FILE1
 
 echo "[TRUNCATED] File 1 has been truncated in TEMP and MOUNT"
+
+# c: Check the integrity of the virtual disk again and perform a diff between the original file and the truncated one.
+
 ./my-fsck virtual-disk
 
-# Link1 - Diffs: http://unix.stackexchange.com/questions/33638/diff-several-files-true-if-all-not-equal
+DIFF_FILE1_TRUNCATED=$(diff $SRC/$FILE1 $MOUNT/$FILE1)
+
+if [ "$DIFF_FILE1_TRUNCATED" == "" ]; 
+then echo "[EQUALS] Original file and truncated are the same in MOUNT and TEMP"
+else echo "[DIFFERENT] Original file and truncated are different in MOUNT and TEMP"
+fi
+
+# d: Copy a third text file into your FS.
+
+cp $SRC/$FILE3 $MOUNT/$FILE3
+
+# e: Check the integrity of the virtual disk and perform a diff between the original file and the one copied into the FS.
+
+./my-fsck virtual-disk
+
+DIFF_FILE3_COPIED=$(diff $SRC/$FILE3 $MOUNT/$FILE3)
+
+if [ "$DIFF_FILE3_COPIED" == "" ]; 
+then echo "[EQUALS] Third file copied on Mount is the same as in the Source."
+else echo "[DIFFERENT] Third file copied on Mount is different as in the Source."
+fi
+
+# f: Truncate the second file in the temp folder and in your FS, so as to increase the file size in one block.
+
+truncate --size=+4096 $TEMP/$FILE2
+truncate --size=+4096 $MOUNT/$FILE2
+
+# g: Check the integrity of the disk and perform a diff between the original file and the truncated one.
+
+./my-fsck virtual-disk
+
+DIFF_MOUNT_TRUNCATED_FILE2=$(diff $SRC/$FILE2 $MOUNT/$FILE2) # See Link1 at bottom | Make diff
+DIFF_TEMP_TRUNCATED_FILE2=$(diff $SRC/$FILE2 $TEMP/$FILE2) # See Link1 at bottom | Make diff
+
+if [ "$DIFF_MOUNT_TRUNCATED_FILE2" == "" ]; 
+then echo "[EQUALS] Second file truncated in MOUNT is the same as the original source"
+else echo "[DIFFERENT] Second file truncated in MOUNT is different from the original source"
+fi
+
+if [ "$DIFF_TEMP_TRUNCATED_FILE2" == "" ]; 
+then echo "[EQUALS] Second file truncated in TEMP is the same as the original source"
+else echo "[DIFFERENT] Second file truncated int TEMP is different from the original source"
+fi
+ 

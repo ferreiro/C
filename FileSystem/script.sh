@@ -1,119 +1,96 @@
 #!/bin/bash
 
-TMP="./temp" # tmp directory for storing data inside
-MPOINT="./mount-point"
-
-SRC="./src" #  Source file
+SRC="./src" # File with the source code from the project
+TEMP="./temp" # temporary file
+MOUNT="./mount-point" # Mount file
 
 FILE1="myFS.h"
 FILE2="fuseLib.c"
 FILE3="MyFileSystem.c"
 
-./my-fsck virtual-disk # Check integrity
-
-if [ $MPOINT ]; then
-	# Mount Directory exists. Removes files of the mount-point directory.
-	rm -r $MPOINT/*
-	echo "$MPOINT directory content deleted... [OK]"
-	#rm -rf -- $TMP_DIRECTORY # INFO: http://stackoverflow.com/questions/820760/in-unix-how-do-you-remove-everything-in-the-current-directory-and-below-it
+if [ $MOUNT ]; then
+	rm $MOUNT/*
+	echo "[DELETED] Directory files from $MPOINT deleted... [OK]"
 else
-	mkdir $MPOINT # Create empty "MPOINT" directory
+	mkdir $MOUNT # Create directory
 fi
 
-if [ $TMP ]; then
-	# Temp Directory exists. Removes files of the mount-point directory.
-	rm -r $TMP/*
-	echo "$TMP directory content deleted... [OK]"
-	#rm -rf -- $TMP # INFO: http://stackoverflow.com/questions/820760/in-unix-how-do-you-remove-everything-in-the-current-directory-and-below-it
-else
-	mkdir $TMP # Create empty "temp" directory
+# a: copy 2 text files greater than 1 block (e.g., src/fuseLib.c and src/myFS.h) info MOUNT and TEMP.
+
+cp $SRC/$FILE1 $TEMP/$FILE1	# copy source file to dest file
+cp $SRC/$FILE1 $MOUNT/$FILE1
+
+cp $SRC/$FILE2 $TEMP/$FILE2	
+cp $SRC/$FILE2 $MOUNT/$FILE2
+
+# b: Check integrity of the virtual disk with my-fsck and perform a diff between original files and those copied to the FS. 
+#	 Truncate the first file (man truncate) in the MOUNT and TEMP folder so as to reduce the file size in one block.
+
+./my-fsck virtual-disk
+
+DIFF_FILE1=$(diff $MOUNT/$FILE1 $TEMP/$FILE1) # Make diff | Diffs: http://unix.stackexchange.com/questions/33638/diff-several-files-true-if-all-not-equal
+DIFF_FILE2=$(diff $MOUNT/$FILE2 $TEMP/$FILE2)
+
+if [ "$DIFF_FILE1" == "" ]; 
+then echo "[EQUALS] First file copied are same in MOUNT and TEMP"
+else echo "[DIFFERENT] First file copied are different in MOUNT and TEMP"
 fi
 
-#(a) Copy two text files with size greater than 1 block (e.g., fuseLib.c and myFS.h) into the
-#FS as well as into a temp directory (./temp for instance) in the Linux’s file system.
+if [ "$DIFF_FILE2" == "" ]; 
+then echo "[EQUALS] Second file copied are same in MOUNT and TEMP"
+else echo "[DIFFERENT] Second file copied are different in MOUNT and TEMP"
+fi
 
-	# Copy file 1 into FileSystem and TMP
-	cp $SRC/$FILE1 $TMP/$FILE1	 		# Copy into temporary directory
-	cp $SRC/$FILE1 $MPOINT/$FILE1			# Copy into filesystem mount directory
-	
-	# Copy file 2 into FileSystem and TMP
-	cp $SRC/$FILE2 $TMP/$FILE2			# Copy into temporary directory
-	cp $SRC/$FILE2 $MPOINT/$FILE2			# Copy into filesystem mount directory
+truncate --size=-4096 $TEMP/$FILE1
+truncate --size=-4096 $MOUNT/$FILE1
 
-#(b) Check the integrity of the virtual disk with my-fsck and perform a diff between the
-#original files and those copied to the FS. Truncate the first file (man truncate) in the
-#temp folder and in your FS so as to reduce the file size in one block.
-	
-	./my-fsck virtual-disk # Check integrity
-	 
-	DIFF=$(diff $TMP/$FILE1 $MPOINT/$FILE1) # http://unix.stackexchange.com/questions/33638/diff-several-files-true-if-all-not-equal
+echo "[TRUNCATED] File 1 has been truncated in TEMP and MOUNT"
 
-	if [ "$DIFF" == "" ]; then
-		echo "[EQUALS] File $TMP/$FILE1 and $MPOINT/$FILE1 are equals"
-	else
-		echo "[Differents] File $TMP/$FILE1 and $MPOINT/$FILE1 are differents"
-	fi
+# c: Check the integrity of the virtual disk again and perform a diff between the original file and the truncated one.
 
-	DIFF=$(diff $TMP/$FILE2 $MPOINT/$FILE2) # http://unix.stackexchange.com/questions/33638/diff-several-files-true-if-all-not-equal
+./my-fsck virtual-disk
 
-	if [ "$DIFF" == "" ]; then
-		echo "[EQUALS] File $TMP/$FILE2 and $MPOINT/$FILE2 are equals"
-	else
-		echo "[Differents] File $TMP/$FILE2 and $MPOINT/$FILE2 are differents"
-	fi
+DIFF_FILE1_TRUNCATED=$(diff $SRC/$FILE1 $MOUNT/$FILE1)
 
-	# Truncate the first file (man truncate) in the temp folder and in your FS so as to reduce the file size in one block.
-	truncate --size=-4096 $TMP/$FILE1
-	echo "[TRUNCATED] File has been truncated"
-		# truncate -s 0 {$TMP/$FILE1}
-		# truncate("$TMP/$FILE1", 4096);
-		# echo $truncatedFile
+if [ "$DIFF_FILE1_TRUNCATED" == "" ]; 
+then echo "[EQUALS] Original file and truncated are the same in MOUNT and TEMP"
+else echo "[DIFFERENT] Original file and truncated are different in MOUNT and TEMP"
+fi
 
-#(c) Check the integrity of the virtual disk again and perform a diff between the original
-#file and the truncated one.
+# d: Copy a third text file into your FS.
 
-	./my-fsck virtual-disk # Check integrity
-	 
-	DIFF=$(diff $TMP/$FILE1 $MPOINT/$FILE1) # http://unix.stackexchange.com/questions/33638/diff-several-files-true-if-all-not-equal
+cp $SRC/$FILE3 $MOUNT/$FILE3
 
-	if [ "$DIFF" == "" ]; then
-		echo "[EQUALS] Truncated File $TMP/$FILE2 and $MPOINT/$FILE2 are equals"
-	else
-		echo "[Differents] Truncated File $TMP/$FILE2 and $MPOINT/$FILE2 are differents"
-	fi
+# e: Check the integrity of the virtual disk and perform a diff between the original file and the one copied into the FS.
 
-#(d) Copy a third text file into your FS.
+./my-fsck virtual-disk
 
-	cp $SRC/$FILE3 $MPOINT/$FILE3 # copy into m point
-	echo "[COPIED] Third file into $MPOINT/MyFileSystem.c"
+DIFF_FILE3_COPIED=$(diff $SRC/$FILE3 $MOUNT/$FILE3)
 
-#(e) Check the integrity of the virtual disk and perform a diff between the original file
-#and the one copied into the FS.
+if [ "$DIFF_FILE3_COPIED" == "" ]; 
+then echo "[EQUALS] Third file copied on Mount is the same as in the Source."
+else echo "[DIFFERENT] Third file copied on Mount is different as in the Source."
+fi
 
-	./my-fsck virtual-disk # Check integrity
-	DIFF=$(diff $SRC/$FILE3 $MPOINT/$FILE3) # http://unix.stackexchange.com/questions/33638/diff-several-files-true-if-all-not-equal
+# f: Truncate the second file in the temp folder and in your FS, so as to increase the file size in one block.
 
-	if [ "$DIFF" == "" ]; then
-		echo "[EQUALS] Third Copied file $SRC/$FILE3 and $MPOINT/$FILE3 are equals"
-	else
-		echo "[Differents] Truncated File $SRC/$FILE3 and $MPOINT/$FILE3 are differents"
-	fi
+truncate --size=+4096 $TEMP/$FILE2
+truncate --size=+4096 $MOUNT/$FILE2
 
-#(f) Truncate the second file in the temp folder and in your FS, so as to increase the file
-#size in one block.
+# g: Check the integrity of the disk and perform a diff between the original file and the truncated one.
 
-	# ¿?¿?¿?¿¿?¿?¿ 
-	# truncate("$TMP/$FILE2", 4096);
-	# truncate("$MPOINT/$FILE2", 4096); 
+./my-fsck virtual-disk
 
-#(g) Check the integrity of the disk and perform a diff between the original file and the
-#truncated one.
-	
-	./my-fsck virtual-disk # Check integrity
-	DIFF=$(diff $TMP/$FILE2 $MPOINT/$FILE2) # http://unix.stackexchange.com/questions/33638/diff-several-files-true-if-all-not-equal
+DIFF_MOUNT_TRUNCATED_FILE2=$(diff $SRC/$FILE2 $MOUNT/$FILE2) # See Link1 at bottom | Make diff
+DIFF_TEMP_TRUNCATED_FILE2=$(diff $SRC/$FILE2 $TEMP/$FILE2) # See Link1 at bottom | Make diff
 
-	if [ "$DIFF" == "" ]; then
-		echo "[EQUALS] Truncated Second file $TMP/$FILE2 and $MPOINT/$FILE2 are equals"
-	else
-		echo "[DIFFERENT] Truncated Second file $TMP/$FILE2 and $MPOINT/$FILE2 are DIFFERENT"
-	fi
+if [ "$DIFF_MOUNT_TRUNCATED_FILE2" == "" ]; 
+then echo "[EQUALS] Second file truncated in MOUNT is the same as the original source"
+else echo "[DIFFERENT] Second file truncated in MOUNT is different from the original source"
+fi
+
+if [ "$DIFF_TEMP_TRUNCATED_FILE2" == "" ]; 
+then echo "[EQUALS] Second file truncated in TEMP is the same as the original source"
+else echo "[DIFFERENT] Second file truncated int TEMP is different from the original source"
+fi
+ 
