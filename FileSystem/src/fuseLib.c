@@ -167,7 +167,7 @@ int my_read(const char *path, char *buf, size_t size, off_t offset, struct fuse_
 			// Desde el punto inicial del offset, hasta el final del bloque, escribes la información
 			// del buf (texto que nos pasan en la función) en el buffer.
 			for(i = offBloque; (i < BLOCK_SIZE_BYTES) && (totalRead < size); i++) {
-				fprintf(stderr, "%c", buffer[i]);
+				// fprintf(stderr, "%c", buffer[i]);
 				buf[totalRead] = buffer[i];
 				totalRead++;
 			}

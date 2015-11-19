@@ -8,12 +8,8 @@ FILE1="myFS.h"
 FILE2="fuseLib.c"
 FILE3="MyFileSystem.c"
 
-if [ $MOUNT ]; then
-	rm -r $MOUNT/*
-	echo "[DELETED] Directory files from $MPOINT deleted... [OK]"
-else
-	mkdir $MOUNT # Create directory
-fi
+rmdir $TEMP # Create directory
+mkdir $TEMP # Create directory
 
 # a: copy 2 text files greater than 1 block (e.g., src/fuseLib.c and src/myFS.h) info MOUNT and TEMP.
 
