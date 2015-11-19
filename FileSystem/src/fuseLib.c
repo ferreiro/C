@@ -33,22 +33,31 @@ void printDirectory(DirectoryStruct direct) {
 }
 
 void printNodeStruct(NodeStruct *ns) {
-	fprintf(stderr, "\n\t ***** NODES *****\n\n");
-	fprintf(stderr, "NumBlocks: %d \n", ns->numBlocks);
-	fprintf(stderr, "FileSIze: %d \n", ns->fileSize);
-	fprintf(stderr, "Modification Time: %lld \n", ns->modificationTime);
-	int i = 0;
-	for (i = 0; i < MAX_BLOCKS_PER_FILE; i++) {
-		fprintf(stderr, "Block %d | ", ns->blocks[i]);
+	if (ns == NULL) {
+		fprintf(stderr, "\t Null node \n");
+		return;
 	}
-	fprintf(stderr, "\n Free Node: %d \n", ns->freeNode);
+	fprintf(stderr, "\t Free node? %d \n", ns->freeNode);
+	fprintf(stderr, "\t FileSIze: %d \n", ns->fileSize);
+	fprintf(stderr, "\t Modification Time: %lld \n", ns->modificationTime);
+	fprintf(stderr, "\t NumBlocks (occupied blocks): %d \n", ns->numBlocks);
+ 	int i = 0;
+	for (i = 0; i < MAX_BLOCKS_PER_FILE; i++) {
+		fprintf(stderr, "\t\t Block #%d: %d bytes\n", i, ns->blocks[i]);
+	}
+	fprintf(stderr, "\n");
 }
-void printNodes(NodeStruct nodes[MAX_NODES]) {
+
+void printAllNodes(NodeStruct *nodes[MAX_NODES]) {
 	int i = 0;
-	int insertedNotes = MAX_NODES - myFileSystem.numFreeNodes;
+	// int insertedNotes = MAX_NODES - myFileSystem.numFreeNodes;
 	fprintf(stderr, "\n\t ***** NODES *****\n");
-	for (i = 0; i < insertedNotes; i++) {
-		printNodeStruct(nodes[i]);
+	for (i = 0; i < MAX_NODES; i++) {
+		if (myFileSystem.nodes[i] == NULL) {
+			fprintf(stderr, "\tNode %d is NULL\n", i);
+		} else {
+			printNodeStruct(nodes[i]); // available node
+		}
 	}
 }
 
@@ -121,36 +130,31 @@ int my_unlink(const char *filename) {
 	}
 	
 	fprintf(stderr, "Inode location is %d\n", inodeLocation);
+	
+	myFileSystem.nodes[nodeIndex] = NULL; // Delete the note from the node's array.
 	myFileSystem.numFreeNodes += 1; // Increase the number of free nodes by 1 because e erased one.
 	
-	// debug: print the node struct for the to delete node
-	//printNodeStruct(myFileSystem.nodes[inodeLocation]);
 	
-	fprintf(stderr, "IS free node 0? %d\n", myFileSystem.nodes[0]->freeNode);
-	fprintf(stderr, "IS free node 1? %d\n", myFileSystem.nodes[1]->freeNode);
-	fprintf(stderr, "IS free node 2 ? %d\n", myFileSystem.nodes[2]->freeNode);
-	fprintf(stderr, "IS free node 3 ? %d\n", myFileSystem.nodes[3]->freeNode);
-	/************************** 
+	/*
 	 * 
-	 * 
-	 * AQUÍ USO EL inodeLocation o el nodeIndex?
-	 * 
-	 * 
-	****/
-	//myFileSystem.nodes[inodeLocation]->freeNode = true; // Free the node.
-	//myFileSystem.nodes[inodeLocation]->modificationTime = time(NULL); // Update modification time with current time
-	
-	//myFIleSystem->nodes[inodeLocation].modificationTime = time(NULL);
-	
-	// debug: print the node struct for the to delete node
-	//printNodeStruct(myFileSystem.nodes[inodeLocation]);
-	
-	//int nodeTotalBlocks = myFileSystem.nodes[inodeLocation]->numBlocks;
-	//int nodeFilesize	= myFileSystem.nodes[inodeLocation]->fileSize;
-	
 	// Erased the blocks used by the node. 
+	// debug: print the node struct for the to delete node
+	//printNodeStruct(myFileSystem.nodes[inodeLocation]);
+	Creo que no es necesario, ya que con ponerlo a NULL el nodo está libre.
+	printNodeStruct(myFileSystem.nodes[nodeIndex]);
+	myFileSystem.nodes[nodeIndex]->freeNode = true; // Free the node.
+	myFileSystem.nodes[nodeIndex]->modificationTime = time(NULL); // Update modification time with current time
+		
+	// debug: print the node struct for the to delete node
+	printNodeStruct(myFileSystem.nodes[nodeIndex]);
 	
-	// updateNode(MyFileSystem *myFileSystem, int nodeNum, NodeStruct *node);
+	int nodeTotalBlocks = myFileSystem.nodes[nodeIndex]->numBlocks;
+	int nodeFilesize	= myFileSystem.nodes[nodeIndex]->fileSize;
+	* // printAllNodes(myFileSystem.nodes);
+	*/
+	
+	
+	
  	
 	return 0;
 }
