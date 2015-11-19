@@ -6,7 +6,7 @@ SRC="./src"
  
 if [ d "$MPOINT" ]; then
 	# Mount Directory exists. Removes files of the mount-point directory.
-	rm $MPOINT/*
+	rm -r $MPOINT/*
 	echo "$MPOINT directory content deleted... [OK]"
 	#rm -rf -- $TMP_DIRECTORY # INFO: http://stackoverflow.com/questions/820760/in-unix-how-do-you-remove-everything-in-the-current-directory-and-below-it
 else
@@ -15,7 +15,7 @@ fi
 
 if [ d "$TMP_DIRECTORY" ]; then
 	# Temp Directory exists. Removes files of the mount-point directory.
-	rm $TMP_DIRECTORY/*
+	rm -r $TMP_DIRECTORY/*
 	echo "$TMP_DIRECTORY directory content deleted... [OK]"
 	#rm -rf -- $TMP_DIRECTORY # INFO: http://stackoverflow.com/questions/820760/in-unix-how-do-you-remove-everything-in-the-current-directory-and-below-it
 else
