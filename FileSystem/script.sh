@@ -9,7 +9,7 @@ FILE2="fuseLib.c"
 FILE3="MyFileSystem.c"
 
 if [ $MOUNT ]; then
-	rm $MOUNT/*
+	rm -r $MOUNT/*
 	echo "[DELETED] Directory files from $MPOINT deleted... [OK]"
 else
 	mkdir $MOUNT # Create directory

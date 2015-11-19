@@ -68,14 +68,9 @@ void printMyFileSYstem() {
  * NEW FUNCTIONS FOR THE BASIC PART
 ****************************************/
 
-int my_unlink(const char *filename) {
-	return 0;	
-}
-
-
 // My unlink function: delete one file from the filesystem.
 
-int my_unlinkTeacher(const char *filename) {
+int my_unlink(const char *filename) {
 	
 	
 	// printDirectory(myFileSystem.directory); // DEBUG stuff only for debugging

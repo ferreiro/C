@@ -285,22 +285,53 @@ int updateSuperBlock(MyFileSystem *myFileSystem) {
 
 int readBitmap(MyFileSystem *myFileSystem)
 {
-	return -1;
+	if(lseek(myFileSystem->fdVirtualDisk, BLOCK_SIZE_BYTES * BITMAP_IDX, SEEK_SET) == (off_t) - 1) {
+		perror("Failed lseek in updateBitmap");
+		return -1;
+	}
+	if(read(myFileSystem->fdVirtualDisk,
+	         myFileSystem->bitMap, sizeof(BIT) * NUM_BITS) == -1) {
+		perror("Failed read in updateBitmap");
+		return -1;
+	}
+	sync();
+	return 0;
 }
 
 int readDirectory(MyFileSystem* myFileSystem)
 {
-	return -1;
+	if(lseek(myFileSystem->fdVirtualDisk, BLOCK_SIZE_BYTES * DIRECTORY_IDX, SEEK_SET) == (off_t) - 1) {
+		perror("Failed lseek in updateDirectory");
+		return -1;
+	}
+	if(read(myFileSystem->fdVirtualDisk, &(myFileSystem->directory), sizeof(DirectoryStruct)) == -1) {
+		perror("Failed write in updateDirectory");
+		return -1;
+	}
+	sync();
+	return 0;
 }
 
 int readSuperblock(MyFileSystem* myFileSystem)
 {
-	return -1;
+	if(lseek(myFileSystem->fdVirtualDisk, BLOCK_SIZE_BYTES * SUPERBLOCK_IDX, SEEK_SET) == (off_t) - 1) {
+		perror("Failed lseek in updateSuperBlock");
+		return -1;
+	}
+	if(read(myFileSystem->fdVirtualDisk, &(myFileSystem->superBlock), sizeof(SuperBlockStruct)) == -1) {
+		perror("Failed write in updateSuperBlock");
+		return -1;
+	}
+	sync();
+	return 0;
 }
 
 int readInodes(MyFileSystem* myFileSystem)
 {
-	return -1;
+	initializeNodes(myFileSystem); // Llamar a esta función que lo que hace es inicializar un nodo... QUe es lo que queremos
+	
+	sync();
+	return 0;
 }
 
 int myMount(MyFileSystem *myFileSystem, char *backupFileName){
