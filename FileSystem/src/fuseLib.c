@@ -80,31 +80,14 @@ int my_unlink(const char *filename) {
 	 ***** poder pasarla a findFileByNAme (que no admite strings constantes) ****/
 	
 	int i=0, j=0;
-	int size = strlen(filename); // one for the null termination
-	char newFilename[size-1]; // Make a copy. Because the parameter is constant, so I can not pass it to the findByname function.
+	char* fname=(char*)(filename+1);
+		
 	
-	//fprintf(stderr, "Tamaño filename: %d\n", size);
-	
-	while (i < strlen(filename)) {
-		if (i == 0 && filename[i] == '/') {
-			// SKip / at the beggining of filenames (/file1.txt)
-		}
-		else {
-			newFilename[j] = filename[i];
-			j++; // newFIlename COunter 
-			//DEBUG fprintf(stderr, "%c", filename[i]);
-		}
-		i++;
-	} 
-	
-	newFilename[size-1] = '\0'; // Set the end of string character
-	// fprintf(stderr, "El nombre del archivo copiado es %s\n", newFilename);
-
 	/** 1. Buscar si el archivo está en nuestro directorio **/
 	/** Si está, liberar el archivo y poner el nombre a empty **/
 	/** OJO! NO hay que tocar nodeIdx... **/
 	
-	int nodeIndexDir = findFileByName(&myFileSystem, newFilename); // NodeIDx índice que ocupa un nodo en el array de nodos
+	int nodeIndexDir = findFileByName(&myFileSystem, fname); // NodeIDx índice que ocupa un nodo en el array de nodos
 	 
 	if (nodeIndexDir == -1) {
 		fprintf(stderr, "File wasn't found on the directory entry\n");  
@@ -115,35 +98,40 @@ int my_unlink(const char *filename) {
 	
 	myFileSystem.directory.numFiles -= 1; // Decrementar numero de archivos en el directorio.
 	myFileSystem.directory.files[nodeIndexDir].freeFile = true; // Put the node in directory as free.
-	strcpy(myFileSystem.directory.files[nodeIndexDir].fileName, "\0"); // Erased the title to empty array.
-
+	updateDirectory(&myFileSystem);
+	
 	int nodeIdx = myFileSystem.directory.files[nodeIndexDir].nodeIdx; // Hacer una copia de nodoIDx del directorio que nos sirve para acceder al array de nodos.
- 
-	// printDirectory(myFileSystem.directory); // DEBUG: Print directory after erasing node.
-	 
+	NodeStruct* inode=myFileSystem.nodes[nodeIdx];
+	
 	/** 2. Borrar datos y liberar nodo usando el nodeIdx obtenido del directorio **/
 
 	myFileSystem.numFreeNodes += 1; // Increase the number of free nodes by 1 because e erased one.
-	myFileSystem.bitMap[nodeIdx] = 0; // Marcar bitmap como libre
- 	
+	
+	for (i=0;i<inode->numBlocks;i++)
+		myFileSystem.bitMap[inode->blocks[i]] = 0; // Marcar bloques de datos en bitmap como libre
+ 
+	myFileSystem.superBlock.numOfFreeBlocks+=inode->numBlocks;
+	updateBitmap(&myFileSystem);
+	updateSuperBlock(&myFileSystem);
+		
  	/**********************************************
  	 * 	Se podría poner unicamente a NULL? Es peor?
  	 **********************************************/
  	 
-	myFileSystem.nodes[nodeIdx]->numBlocks=0;
-	myFileSystem.nodes[nodeIdx]->fileSize=0;
-	myFileSystem.nodes[nodeIdx]->freeNode=true; // Delete the note from the node's array.
+	inode->numBlocks=0;
+	inode->fileSize=0;
+	inode->freeNode=true; // Delete the note from the node's array.
 
- 	/**********************************************
- 	 * 	NUumOffREEbLOCKS de SUperblock también se tiene que actualizar.
- 	 **********************************************/
- 	 
- 	myFileSystem.numFreeNodes -= 1;
+	updateNode(&myFileSystem,nodeIdx,inode);
+	
+	free(inode);
+	myFileSystem.nodes[nodeIdx]=NULL;
+	
  	  
  	//printAllNodes(myFileSystem.nodes);
  	//printDirectory(myFileSystem.directory); // DEBUG stuff only for debugging
 
-	fprintf(stderr, "\n Congrats!!! %s file deleted \n", newFilename);
+	fprintf(stderr, "\n Congrats!!! %s file deleted \n", filename);
  	
 	return 0;
 }
