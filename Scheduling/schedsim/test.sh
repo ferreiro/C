@@ -81,9 +81,11 @@ for line in $(./schedsim -L); do
 		for f_name in *.log; do 
 			auxFilename=($directory"/"$algorithmName"__"$f_name)
 			mv $f_name $auxFilename
-
+ 
 			# Generate Chart generate chart
-			.././gantt-gplot/generate_gantt_chart $auxFilename
+			cd "../gantt-gplot/"
+			./generate_gantt_chart "../schedsim/"$auxFilename
+			cd "../schedsim/"
 		done
 
 	else
