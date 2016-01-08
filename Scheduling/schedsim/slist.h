@@ -19,11 +19,11 @@ typedef struct list_head list_node_t;
 
 /* Operations on slist_t */
 void init_slist (slist_t* slist, size_t node_offset);
-void insert_slist ( slist_t* slist,void* elem);
+void insert_slist ( slist_t* slist,void* elem); //  inserts the elem item at the end of the list
 void insert_slist_head ( slist_t* slist,void* elem);
 void remove_slist ( slist_t* slist,void* elem);
 void* head_slist ( slist_t* slist);
-void* tail_slist ( slist_t* slist);
+void* tail_slist ( slist_t* slist); // returns the last element of thelist (butitdoesnotremoveitfromthelist).
 void* next_slist ( slist_t* slist,void* elem);
 void* prev_slist ( slist_t* slist,void* elem);
 void insert_after_slist(slist_t* slist, void *object, void *nobject);
