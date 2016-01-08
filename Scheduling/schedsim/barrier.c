@@ -23,6 +23,15 @@ int sys_barrier_wait(sys_barrier_t *barrier)
 
 #else
 
+/*
+
+Implement a synchronization barrier by using locks and condition variables. 
+Complete the barrier implementation in the barrier.c file 
+(functions sys_barrier_init(), sys_barrier_destroy() and sys_barrier_wait() of the #else code path). 
+Activating this barrier in the scheduler entails modifying the provided Makefile so as 
+to ensure that the POSIX_BARRIER preprocessor symbol is not defined.
+
+*/
 
 /* Barrier initialization function */
 int sys_barrier_init(sys_barrier_t *barrier, unsigned int nr_threads)
