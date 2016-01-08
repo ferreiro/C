@@ -5,6 +5,29 @@
 #include "sched.h"
 
 
+static task_t* pick_next_task_fcfs(runqueue_t* rq,int cpu)
+{
+	return NULL;
+}
+
+static void enqueue_task_fcfs(task_t* t,int cpu, int runnable)
+{
+
+}
+
+static void task_tick_fcfs(runqueue_t* rq,int cpu)
+{
+
+} 
+
+// STEALING
+// When the stealing operation of the scheduling algoritm gets invoked, 
+// by convention, FCFS will pick the last task in the run queue.
+
+static task_t* steal_task_fcfs(runqueue_t* rq,int cpu)
+{	
+	return NULL;
+}
 
 // Instancing the interface of operations for the 
 // FCFS scheduler as follows:
