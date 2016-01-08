@@ -36,8 +36,6 @@ static task_t* steal_task_prio(runqueue_t* rq,int cpu)
 // Instancing the interface of operations for the 
 // PRIO scheduler as follows:
 sched_class_t prio_sched={
-    .task_new=task_new_prio,
-	.task_free=task_free_prio,
 	.pick_next_task=pick_next_task_prio,
 	.enqueue_task=enqueue_task_prio,
 	.task_tick=task_tick_prio,
