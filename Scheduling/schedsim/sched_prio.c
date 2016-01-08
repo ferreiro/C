@@ -86,7 +86,7 @@ static void task_tick_prio(runqueue_t* rq,int cpu)
 	In the event the stealing operation of the scheduling algoritm gets invoked, 
 	this scheduler will select the lowest priority task found in the run queue. 
 */
-static task_t* steal_task_fcfs(runqueue_t* rq,int cpu)
+static task_t* steal_task_prio(runqueue_t* rq,int cpu)
 {	
 
 	// Due our runqueue is ordered from most priority (left)
