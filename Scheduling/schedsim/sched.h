@@ -114,6 +114,8 @@ typedef struct sched_class {
 /* Scheduling class descriptors */
 extern sched_class_t rr_sched;
 extern sched_class_t sjf_sched;
+extern sched_class_t fcfs_sched; // new
+extern sched_class_t prio_sched; // new
 
 /* Numerical IDs for the available scheduling algorithms */
 enum {
