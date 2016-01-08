@@ -33,24 +33,20 @@ to ensure that the POSIX_BARRIER preprocessor symbol is not defined.
 
 */
 
+
 /* Barrier initialization function */
 int sys_barrier_init(sys_barrier_t *barrier, unsigned int nr_threads)
 {
-    /* Initialize fields in sys_barrier_t
-         ... To be completed ....
-    */
+  pthread_mutex_init(&(barrier->mutex), NULL);
+  pthread_cond_init(&(barrier->cond), NULL);
 
-    /*
-    barrier->mutex=; // Barrier lock 
-    barrier->cond=; // Condition variable where threads remain blocked
-    barrier->nr_threads_arrived[X]=; // Number of threads that reached the barrier.
-                                    // [0] Counter for even barriers, [1] Counter for odd barriers
-    barrier->max_threads=nr_threads; // Number of threads that rely on the syncronization barrier
-    barrier->cur_barrier=; // Field to indicate whether the current barrier is an even (0) or an odd (1) barrier
-    */
+      barrier->nr_threads_arrived[0] = 0;
+      barrier->nr_threads_arrived[1] = 0;
+    barrier->cur_barrier = 0;
 
-
-    return 0;
+      barrier->max_threads = nr_threads;
+  
+      return 0;
 }
 
 /* Destroy barrier resources */
@@ -59,18 +55,11 @@ int sys_barrier_destroy(sys_barrier_t *barrier)
     /* Destroy synchronization resources associated with the barrier
           ... To be completed ....
     */
-  /*
-  barrier->mutex=; // Barrier lock 
-  barrier->cond=; // Condition variable where threads remain blocked
-  barrier->nr_threads_arrived[X]=; // Number of threads that reached the barrier.
-                                  // [0] Counter for even barriers, [1] Counter for odd barriers
-  barrier->max_threads=nr_threads; // Number of threads that rely on the syncronization barrier
-  barrier->cur_barrier=; // Field to indicate whether the current barrier is an even (0) or an odd (1) barrier
-  */
-
-    return 0;
+  pthread_mutex_destroy(&(barrier->mutex));
+  pthread_cond_destroy(&(barrier->cond));
+  return 0;
 }
-
+ 
 /* Main synchronization operation */
 int sys_barrier_wait(sys_barrier_t *barrier)
 {
@@ -86,11 +75,24 @@ int sys_barrier_wait(sys_barrier_t *barrier)
 
         ... To be completed ....
     */
-    /*
-    barrier->mutex //  adquires the lock
-    // increments the nr_threads_arrived counter atomically
-    nr_threads_arrived
-    */
+  pthread_mutex_lock(&(barrier->mutex));
+  barrier->nr_threads_arrived[barrier->cur_barrier]++;
+
+  if(barrier->nr_threads_arrived[barrier->cur_barrier] < barrier->max_threads){
+    pthread_cond_wait(&(barrier->cond), &(barrier->mutex));
+  }
+  else{
+    if(barrier->cur_barrier == 0){
+      barrier->cur_barrier = 1;
+    }
+    else if(barrier->cur_barrier == 1){
+      barrier->cur_barrier = 0;
+    }
+    barrier->nr_threads_arrived[barrier->cur_barrier] = 0;  
+    pthread_cond_broadcast(&(barrier->cond));
+  }
+
+  pthread_mutex_unlock(&(barrier->mutex));
     
     return 0;
 }
