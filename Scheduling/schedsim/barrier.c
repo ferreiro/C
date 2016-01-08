@@ -39,6 +39,17 @@ int sys_barrier_init(sys_barrier_t *barrier, unsigned int nr_threads)
     /* Initialize fields in sys_barrier_t
          ... To be completed ....
     */
+
+    /*
+    barrier->mutex=; // Barrier lock 
+    barrier->cond=; // Condition variable where threads remain blocked
+    barrier->nr_threads_arrived[X]=; // Number of threads that reached the barrier.
+                                    // [0] Counter for even barriers, [1] Counter for odd barriers
+    barrier->max_threads=nr_threads; // Number of threads that rely on the syncronization barrier
+    barrier->cur_barrier=; // Field to indicate whether the current barrier is an even (0) or an odd (1) barrier
+    */
+
+
     return 0;
 }
 
@@ -48,6 +59,15 @@ int sys_barrier_destroy(sys_barrier_t *barrier)
     /* Destroy synchronization resources associated with the barrier
           ... To be completed ....
     */
+  /*
+  barrier->mutex=; // Barrier lock 
+  barrier->cond=; // Condition variable where threads remain blocked
+  barrier->nr_threads_arrived[X]=; // Number of threads that reached the barrier.
+                                  // [0] Counter for even barriers, [1] Counter for odd barriers
+  barrier->max_threads=nr_threads; // Number of threads that rely on the syncronization barrier
+  barrier->cur_barrier=; // Field to indicate whether the current barrier is an even (0) or an odd (1) barrier
+  */
+
     return 0;
 }
 
@@ -66,6 +86,12 @@ int sys_barrier_wait(sys_barrier_t *barrier)
 
         ... To be completed ....
     */
+    /*
+    barrier->mutex //  adquires the lock
+    // increments the nr_threads_arrived counter atomically
+    nr_threads_arrived
+    */
+    
     return 0;
 }
 
