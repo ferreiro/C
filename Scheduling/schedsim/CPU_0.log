@@ -8,53 +8,48 @@
 (t2): P3 running
 (t3): New task P4
 (t3): P3 running
-(t3): Context switch (P3)<->(P2)
-(t4): P2 running
-(t5): P2 running
+(t4): P3 running
+(t5): P3 running
 (t6): task P1 awoken
+(t5): Context switch (P3)<->(P2)
 (t6): P2 running
-(t7): Task P2 goes to sleep until (t8)
-(t6): Context switch (P2)<->(P4)
-(t7): P4 running
-(t8): task P2 awoken
-(t8): P4 running
+(t7): P2 running
+(t8): P2 running
+(t9): Task P2 goes to sleep until (t10)
+(t8): Context switch (P2)<->(P4)
 (t9): P4 running
-(t10): Task P4 goes to sleep until (t12)
-(t9): Context switch (P4)<->(P3)
-(t10): P3 running
-(t11): P3 running
-(t12): task P4 awoken
-(t11): Context switch (P3)<->(P1)
+(t10): task P2 awoken
+(t10): P4 running
+(t11): P4 running
+(t12): Task P4 goes to sleep until (t14)
+(t11): Context switch (P4)<->(P1)
 (t12): P1 running
 (t13): P1 running
+(t14): task P4 awoken
 (t14): P1 running
-(t14): Context switch (P1)<->(P2)
-(t15): P2 running
-(t15): Context switch (P2)<->(P4)
-(t16): P4 running
-(t17): Task P4 goes to sleep until (t18)
-(t16): Context switch (P4)<->(P1)
-(t17): P1 running
-(t17): Context switch (P1)<->(idle)
+(t15): P1 running
+(t15): Context switch (P1)<->(P2)
+(t16): P2 running
+(t16): Context switch (P2)<->(P4)
+(t17): P4 running
+(t18): Task P4 goes to sleep until (t19)
+(t17): Context switch (P4)<->(idle)
+(t18): idle running
 ==================
 P1	0	1	running
 P1	1	6	I/O
 P1	6	12	ready
-P1	12	15	running
-P1	15	17	ready
-P1	17	18	running
-P2	1	4	ready
-P2	4	7	running
-P2	7	8	I/O
-P2	8	15	ready
-P2	15	16	running
+P1	12	16	running
+P2	1	6	ready
+P2	6	9	running
+P2	9	10	I/O
+P2	10	16	ready
+P2	16	17	running
 P3	0	1	ready
-P3	1	4	running
-P3	4	10	ready
-P3	10	12	running
-P4	3	7	ready
-P4	7	10	running
-P4	10	12	I/O
-P4	12	16	ready
-P4	16	17	running
-P4	17	18	I/O
+P3	1	6	running
+P4	3	9	ready
+P4	9	12	running
+P4	12	14	I/O
+P4	14	17	ready
+P4	17	18	running
+P4	18	19	I/O
