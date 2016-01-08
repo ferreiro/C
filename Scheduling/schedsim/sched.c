@@ -380,10 +380,17 @@ sched_event_t* get_next_sched_event(int cpu, int timeout)
  * This function takes care of waking up tasks that become runnable
  * in the specified simulation_step on a certain CPU.
  * It returns the number of events processed (woken up tasks).
+ *
+ * This function processes the scheduling-related events that take place
+ * on this simulation cycle, such as when a new task enters the system or
+ * when a task wakes up upon completion of an I/O operation. In case an 
+ * event leads a task to enter the ready state, the enqueue_task() operation
+ * of the active scheduling algorithm is invoked, enabling it to add a new runnable
+ * task to the run queue associated with that CPU.
  */
 int process_sched_events(int cpu, int simulation_step)
 {
-    int event_count=0;
+    int event_count=0; // number of events processed
     sched_event_t *event;
     runqueue_t* rq=get_runqueue_cpu(cpu);
 
@@ -391,7 +398,6 @@ int process_sched_events(int cpu, int simulation_step)
         task_t* task=event->task;
         exec_profile_t* task_profile=&task->task_profile;
         exec_phase_t* exec_phase=NULL;
-
 
         switch(event->type) {
         case NEW_TASK:
