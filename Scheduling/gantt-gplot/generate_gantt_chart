@@ -1,0 +1,57 @@
+#!/bin/bash
+inputfile=$1
+tag=$2
+
+## Function to extract the data required for the gantt diagram
+function extract_gantt_data() {
+marker_found=0
+cnt_lines=0
+cnt_events=0
+while read fline
+do
+    if [ ${marker_found} -eq 0 ]; then
+        case $fline in
+            =========*) marker_found=1 ;;
+            *);;
+        esac
+    else
+        echo $fline
+	cnt_events=$(( ${cnt_events} + 1 ))
+    fi
+    cnt_lines=$(( ${cnt_lines} + 1 ))
+done
+
+if [ ${cnt_events} -eq  0 ]; then
+	total_ticks=$(( ${cnt_lines} - 1 ))
+	printf  "idle\t0\t${total_ticks}\tidle\n" 	
+fi
+
+}
+
+if [ $# -lt 1 ]; then
+    echo "usage: $0 <input_log_file> [tag]"
+    exit 1
+fi
+
+if [ ! -f "$inputfile" ]; then
+    echo "$inputfile does not exist"
+    exit 2   
+fi
+
+if [ "$tag" == "" ]; then
+    datafile=${inputfile%*.log}.csv
+else
+    datafile=${inputfile%*.log}_${tag}.csv
+fi
+target_file=${datafile%*.csv}.eps
+target_gpfile=${datafile%*.csv}.gp
+
+
+extract_gantt_data < $inputfile > $datafile
+
+echo "Generating gantt chart..."
+./gantt.py -o "${target_gpfile}" -c colors.cfg ${datafile}
+echo "Generating EPS file..."
+gnuplot -e "outfile='${target_file}'" -e "script='${target_gpfile}'" main.gp
+echo "Done!"
+rm -f ${target_gpfile} ${datafile}
