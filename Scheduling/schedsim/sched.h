@@ -119,6 +119,8 @@ extern sched_class_t sjf_sched;
 enum {
     RR_SCHED,
     SJF_SCHED,
+    FCFS_SCHED,
+    PRIO_SCHED,
     NR_AVAILABLE_SCHEDULERS
 };
 
@@ -132,6 +134,8 @@ typedef struct sched_choice {
 static const sched_choice_t available_schedulers[NR_AVAILABLE_SCHEDULERS]= {
     {RR_SCHED,"RR",&rr_sched},
     {SJF_SCHED,"SJF",&sjf_sched},
+    {FCFS_SCHED,"FCFS",&fcfs_sched},
+    {PRIO_SCHED,"PRIO",&prio_sched},
 };
 
 
