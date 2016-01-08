@@ -72,7 +72,6 @@ for line in $(./schedsim -L); do
 
 		while (( cpus <= maxCPUs )); do
 			./schedsim -n $cpus -i $filename
-			
 			echo "---"
 			((cpus+=1))
 		done
@@ -82,12 +81,16 @@ for line in $(./schedsim -L); do
 		for f_name in *.log; do 
 			auxFilename=($directory"/"$algorithmName"__"$f_name)
 			mv $f_name $auxFilename
+
+			# Generate Chart generate chart
+			.././gantt-gplot/generate_gantt_chart $auxFilename
 		done
 
 	else
 		# This line is header. Not the algorithm name
 		# print on screen
-		echo $line
+		#echo $line
+		echo ""
 	fi
 	((i+=1))
 done
