@@ -18,15 +18,15 @@ valid=false
 while [ "$valid" != "true" ]
 do
 	echo "(?) Filename (without extension): "
-	read filename
+	read auxFilename
 
-	auxFile=("./examples/"$filename".txt")
+	filename=("./examples/"$auxFilename".txt")
 	
-	if [ -f "$auxFile" ]
+	if [ -f "$filename" ]
 	then
 	valid=true
 	else
-		echo "$auxFile not found."
+		echo "$filename not found."
 	fi
 done
 
@@ -61,26 +61,39 @@ mkdir $directory # creates an empty directory
  
 array2=()
 i=0
-for word in $(./schedsim -L); do
+for line in $(./schedsim -L); do
 	if (( i >= 2 )); then
-		
-		j=0
-		algorithm=$word
-		echo $algorithm
+		cpus=1
+		algorithmName=$line
 
-		while (( j < maxCPUs )); do
-			echo $j
-			((j+=1))
+		echo "=========================================================="
+		echo "Executing $maxCPUs times $algorithmName algorithm"
+		echo "=========================================================="
+
+		while (( cpus <= maxCPUs )); do
+			./schedsim -n $cpus -i $filename
+			
+			echo "---"
+			((cpus+=1))
 		done
+
+		# Backup files. Moving to other directory and with a special name
+		# Filename will be: $algorithmName"_"$cpus".log"
+		for f_name in *.log; do 
+			auxFilename=($directory"/"$algorithmName"__"$f_name)
+			mv $f_name $auxFilename
+		done
+
 	else
-		# skip text
-		echo $word
+		# This line is header. Not the algorithm name
+		# print on screen
+		echo $line
 	fi
 	((i+=1))
-done 
+done
 
-
-
+exit 0 
+ 
 #foreach nameSched in listOfAvailableSchedulers
 #do
 #    for cpus = 1 to maxCPUs
