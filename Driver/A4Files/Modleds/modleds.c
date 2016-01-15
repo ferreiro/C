@@ -47,8 +47,5 @@ static void __exit modleds_exit(void)
     set_leds(kbd_driver,ALL_LEDS_OFF);
 }
 
-module_init(modleds_init);
-module_exit(modleds_exit);
-
 MODULE_LICENSE("GPL");
 MODULE_DESCRIPTION("Modleds");
