@@ -201,25 +201,30 @@ static ssize_t device_read(struct file *filp,	/* see include/linux/fs.h   */
 static ssize_t
 device_write(struct file *filp, const char *buff, size_t len, loff_t * off)
 {
-	int numLock 	= 0; // 0= off | 1 = on
-	int capsLock 	= 0; // 0= off | 1 = on
-	int scrollLock 	= 0; // 0= off | 1 = on
-	char *copiedBuff; // Copied buff on the kernel space
+	int numLock, capsLock, scrollLock; // 0= off | 1 = on
+	char *copiedBuff; // Copied buff from kernel space
+
+	numLock 	= 0; // Turn off (0=off | 1=on)
+	capsLock 	= 0; // Turn off
+	scrollLock 	= 0; // Turn off
 
 	printk(KERN_INFO "Welcome to Leds generator function!.\n");
 
 	if (copy_from_user(copiedBuff, &buff, len) < 0)
 		return -EFAULT; // No copied string
 	
+	printk(KERN_INFO "Copied string from user Space!.\n");
+
 	if (len > 0) {
 		for (int i = 0; i < len; i++) {
 			char c = copiedBuff[i];
 
-			if (c == "1") 	  numLock    = 1;
-			elseif (c == "2") capsLock   = 1;
-			elseif (c == "3") scrollLock = 1;
+			if (c == "1") 	  numLock    = 1; // turn on lead
+			elseif (c == "2") capsLock   = 1; // turn on lead
+			elseif (c == "3") scrollLock = 1; // turn on lead
 		}
-	} // else: we need to put off all the keyboard leds.
+	} 
+	// else: we need to put off all the keyboard leds.
 
 	printk(KERN_INFO "Finishing device_write leads.\n");
 	printk(KERN_INFO "Now we have to set the device colors!.\n");
