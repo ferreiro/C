@@ -13,10 +13,10 @@ static int fileDescriptor;
 #define NUMLOCK "1"
 #define CAPSLOCK "2"
 #define SCROLLLOCK "3"
-#define SLEEP_TIME 50 // number in seconds
+#define SLEEP_TIME 130 // number in seconds
  
 int menu();
-int setLed(int filedesc, char *buf, int len);
+int setLed(int filedesc, char *buf);
 void fountain();
 void randomPattern();
 void stroves();
@@ -51,7 +51,11 @@ int main() {
 		else if (option == 3) // stroves
 			stroves(); 
 		else if (option == 4) // binary counter
-			binaryCounter(); 
+			binaryCounter();			
+			
+		if((setLed(fileDescriptor, "")) != 0) {
+			puts("Problems setting the ledt");
+		}
 	}
 
 	if (close(fileDescriptor) < 0) {
@@ -168,7 +172,8 @@ int menu() {
 	return option;
 }
 
-int setLed(int filedesc, char *buf, int len) {
+int setLed(int filedesc, char *buf) {
+	int len = strlen(buf);
     int bytes_writed;
 	if((bytes_writed = write(filedesc, buf, len)) < 0) {
 		puts("Can not write to file!\n");
@@ -184,23 +189,16 @@ void fountain() {
 	puts("hi");
 	
 	for (i=0; i < total; i++) {
-		// Go right
-		for (j=0; j < N; j++) {
-			SleepMs(SLEEP_TIME);
-			printf("%c", ledsNumber[j]);
-			if((setLed(fileDescriptor, &ledsNumber[j], 1)) != 0) {
-				puts("Problems setting the ledt");
-			}
+		for (j = 0; j < 4; j++) {
+				char c = ledsNumber[j];
+				if (j == 3) {
+					c = ledsNumber[1];
+				} 
+				if((setLed(fileDescriptor, &c)) != 0) {
+					puts("Problems setting the ledt");
+				}
+				SleepMs(150);
 		}
-		// Go left
-		for (j=N-2; j > 0; j--) {
-			SleepMs(SLEEP_TIME);
-			printf("%c", ledsNumber[j]);
-			if((setLed(fileDescriptor, &ledsNumber[j], 1)) != 0) {
-				puts("Problems setting the ledt");
-			}
-		}
-		printf("\n");
 	}
 }
 
@@ -218,13 +216,13 @@ void randomPattern() {
 	/* Print 5 random numbers from 0 to 49 */
 	for( i = 0 ; i < n ; i++ ) {
 		
-		num = random() % 3;
+		num = (random() % 3) + 1;
 		sprintf(tmpBuff, "%d", num);
 		buff = tmpBuff;
 		
 		puts(buff);
 	 
-		if((setLed(fileDescriptor, buff, 1)) != 0) {
+		if((setLed(fileDescriptor, buff)) != 0) {
 			puts("Problems setting the ledt");
 		}
 		
@@ -238,23 +236,25 @@ void randomPattern() {
 void stroves() {
 	int n = 10000, i;
 	char *buff;
+	int time = 3000;
 	
 	for( i = 0 ; i < n ; i++ ) {
 		
 		if (i % 2 == 0) {
-			buff = "12";
+			buff = "13";
 		}
 		else {
-			buff = "23";
+			buff = "22";
 		}
 		
 		puts(buff);
 	 
-		if((setLed(fileDescriptor, buff, 1)) != 0) {
+		if((setLed(fileDescriptor, buff)) != 0) {
 			puts("Problems setting the ledt");
 		}
 		
-		SleepMs(SLEEP_TIME/(i+0.6 - i*0.9) );
+		time /= 1.25;
+		SleepMs( time );
 	}
 	
 	puts("FInished");
@@ -267,18 +267,18 @@ void binaryCounter() {
 	
 	for (i=0; i <= 7; i++) {
 		
-		if (i==0) buff = "0x0";
-		else if (i==1) buff = "0x1"; 
-		else if (i==2) buff = "0x2";
-		else if (i==3) buff = "0x3";
-		else if (i==4) buff = "0x4";
-		else if (i==5) buff = "0x5";
-		else if (i==6) buff = "0x6";
-		else if (i==7) buff = "0x7";
+		if (i==0) buff = "0";
+		else if (i==1) buff = "3"; 
+		else if (i==2) buff = "2";
+		else if (i==3) buff = "23";
+		else if (i==4) buff = "1";
+		else if (i==5) buff = "13";
+		else if (i==6) buff = "12";
+		else if (i==7) buff = "123";
 		 
 		puts(buff);
 		
-		if((setLed(fileDescriptor, buff, 1)) != 0) {
+		if((setLed(fileDescriptor, buff)) != 0) {
 			puts("Problems setting the ledt");
 		}
 		

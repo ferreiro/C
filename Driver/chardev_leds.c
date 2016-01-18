@@ -259,7 +259,7 @@ device_write(struct file *filp, const char *buff, size_t len, loff_t * off)
 {
 	char kbuf[len]; // Creating user space array
     int num_lock, caps_lock, scroll_lock; // 0= off | 1 = on 
-	int i, bytes_to_write, ledsMask = 0x0, tmp;
+	int i, bytes_to_write, ledsMask = 0, tmp;
 	
 	num_lock 	= 0; // Turn off (0=off | 1=on)
 	caps_lock 	= 0; // Turn off
@@ -281,11 +281,11 @@ device_write(struct file *filp, const char *buff, size_t len, loff_t * off)
 	}
 	
 	if (num_lock == 1)      
-        ledsMask |= 0x2;
+        ledsMask = ledsMask |= 0x2;
 	if (caps_lock == 1)     
-        ledsMask |= 0x4;
+        ledsMask = ledsMask |= 0x4;
 	if (scroll_lock == 1)   
-        ledsMask |= 0x1;
+        ledsMask = ledsMask |= 0x1;
 
 	kbd_driver= get_kbd_driver_handler(); // Create a new driver handler
     set_leds(kbd_driver, ledsMask); // Setting keyboard leds using the mask
