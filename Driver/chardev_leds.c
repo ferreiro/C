@@ -249,36 +249,33 @@ static ssize_t device_read(struct file *filp,	/* see include/linux/fs.h   */
 static ssize_t
 device_write(struct file *filp, const char *buff, size_t len, loff_t * off)
 {
-
 	char kbuf[len];
-	int i, bytes_to_write = len, ledsMask = 0;
+	int i, bytes_to_write, ledsMask = 0, tmp;
 	int numLock, capsLock, scrollLock; // 0= off | 1 = on 
+	
+	printk(KERN_ALERT "Welcome to the write operation.\n"); 
 	
 	numLock 	= 0; // Turn off (0=off | 1=on)
 	capsLock 	= 0; // Turn off
 	scrollLock 	= 0; // Turn off
+
+	bytes_to_write = len;
 	
-	printk(KERN_ALERT "Welcome to the write operation.\n"); 
-	/*
-	* Actually transfer the data onto the userspace buffer.
-	* For this task we use copy_to_user() due to security issues
-	*/ 
+	// Transfer date onto the userspace buffer.
+	// For this task, we use copy_to_user() due to security issues.
 	if (copy_from_user(kbuf,buff,bytes_to_write) != 0) {
 		printk(KERN_ALERT "Problems copying....\n"); 
 		return -EFAULT;
 	} 
 	
 	for (i = 0; i < bytes_to_write; i++) {
-		if (kbuf[i] == '1') 
-			numLock = 1; 
-		if (kbuf[i] == '2')
-			capsLock = 1;
-		if (kbuf[i] == '3')
-			scrollLock = 1;
+		tmp = kbuf[i];
+		if 		(tmp == '1') numLock 	= 1; 
+		else if (tmp == '2') capsLock 	= 1;
+		else if (tmp == '3') scrollLock = 1;
 	}
 	
 	// Make mask depending on the 3 values.
-	
 	
 	if (numLock == 0 && capsLock == 0 && scrollLock == 1)
 		ledsMask = 0x1;
@@ -297,18 +294,15 @@ device_write(struct file *filp, const char *buff, size_t len, loff_t * off)
 	else
 		ledsMask = 0x0;
 	
-	kbd_driver= get_kbd_driver_handler();
-    set_leds(kbd_driver, ledsMask);
-    
-	//printk(userInput[i]);
-	//printk("%s", userInput[i]);
-
+	printk(KERN_ALERT "MAsk %d", ledsMask);
 	printk(KERN_ALERT "numLock %d\n", numLock);
 	printk(KERN_ALERT "capsLock %d\n", capsLock);
 	printk(KERN_ALERT "scrollLock %d\n", scrollLock);
-	printk(KERN_ALERT "MAsk %d", ledsMask);
 
-	return SUCCESS;
+	kbd_driver= get_kbd_driver_handler(); // Create a new driver handler
+    set_leds(kbd_driver, ledsMask); // Setting keyboard leads passing the mask
+    
+	return bytes_to_write;
 }
 
 /*
