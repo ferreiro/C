@@ -5,6 +5,7 @@
 #include <stdlib.h>
 #include <time.h>
 #include <string.h>
+#include <math.h>  
 
 static int fileDescriptor;
 #define PATH "/dev/chardev_leds" // Path to write
@@ -237,7 +238,7 @@ void stroves() {
 	int n = 10000, i;
 	char *buff;
 	int time = 3000;
-	
+ 
 	for( i = 0 ; i < n ; i++ ) {
 		
 		if (i % 2 == 0) {
