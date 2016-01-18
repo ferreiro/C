@@ -245,15 +245,21 @@ static ssize_t device_read(struct file *filp,	/* see include/linux/fs.h   */
 // https://www.quora.com/Linux-Kernel/How-does-copy_to_user-work
 // int copy_to_user(void *dst, const void *src, unsigned int size);
 
+void printDebug(int mask, int numlock, int capslock, int scrolllock) {
+    printk(KERN_ALERT "-- Welcome to the write operation.\n");  
+    printk(KERN_ALERT "MAsk %d", mask);
+    printk(KERN_ALERT "numLock %d\n", numlock);
+    printk(KERN_ALERT "capsLock %d\n", capslock);
+    printk(KERN_ALERT "scrollLock %d\n", scrolllock);  
+}
+
 // REcibimos del usuario, un array de numeros (que crea usando sudo echo 123)
 static ssize_t
 device_write(struct file *filp, const char *buff, size_t len, loff_t * off)
 {
-	char kbuf[len];
+	char kbuf[len]; // Creating user space array
+    int numLock, capsLock, scrollLock; // 0= off | 1 = on 
 	int i, bytes_to_write, ledsMask = 0, tmp;
-	int numLock, capsLock, scrollLock; // 0= off | 1 = on 
-	
-	printk(KERN_ALERT "Welcome to the write operation.\n"); 
 	
 	numLock 	= 0; // Turn off (0=off | 1=on)
 	capsLock 	= 0; // Turn off
@@ -261,8 +267,7 @@ device_write(struct file *filp, const char *buff, size_t len, loff_t * off)
 
 	bytes_to_write = len;
 	
-	// Transfer date onto the userspace buffer.
-	// For this task, we use copy_to_user() due to security issues.
+	// Transfer date onto the userspace buffer. use copy_to_user() for security issues.
 	if (copy_from_user(kbuf,buff,bytes_to_write) != 0) {
 		printk(KERN_ALERT "Problems copying....\n"); 
 		return -EFAULT;
@@ -275,41 +280,17 @@ device_write(struct file *filp, const char *buff, size_t len, loff_t * off)
 		else if (tmp == '3') scrollLock = 1;
 	}
 	
-	// Make mask depending on the 3 values.
-	
-	if (numLock == 1)
-		ledsMask = ledsMask |= 0x2;
-	if (capsLock == 1)
-		ledsMask = ledsMask |= 0x4;
-	if (scrollLock == 1)
-		ledsMask = ledsMask |= 0x1;
-		
-	/*
-	if (numLock == 0 && capsLock == 0 && scrollLock == 1)
-		ledsMask = 0x1;
-	else if (numLock == 0 && capsLock == 1 && scrollLock == 0)
-		ledsMask = 0x2;
-	else if (numLock == 0 && capsLock == 1 && scrollLock == 1)
-		ledsMask = 0x3;
-	else if (numLock == 1 && capsLock == 0 && scrollLock == 0)
-		ledsMask = 0x4;
-	else if (numLock == 1 && capsLock == 0 && scrollLock == 1)
-		ledsMask = 0x5;
-	else if (numLock == 1 && capsLock == 1 && scrollLock == 0)
-		ledsMask = 0x6;
-	else if (numLock == 1 && capsLock == 1 && scrollLock == 1)
-		ledsMask = 0x7;
-	else
-		ledsMask = 0x0;
-	*/	
-	
-	printk(KERN_ALERT "MAsk %d", ledsMask);
-	printk(KERN_ALERT "numLock %d\n", numLock);
-	printk(KERN_ALERT "capsLock %d\n", capsLock);
-	printk(KERN_ALERT "scrollLock %d\n", scrollLock);
+	if (numLock == 1)      
+        ledsMask = ledsMask |= 0x2;
+	if (capsLock == 1)     
+        ledsMask = ledsMask |= 0x4;
+	if (scrollLock == 1)   
+        ledsMask = ledsMask |= 0x1;
 
 	kbd_driver= get_kbd_driver_handler(); // Create a new driver handler
-    set_leds(kbd_driver, ledsMask); // Setting keyboard leads passing the mask
+    set_leds(kbd_driver, ledsMask); // Setting keyboard leds using the mask
+    
+    printDebug(mask, numlock, capslock, scrolllock);
     
 	return bytes_to_write;
 }
