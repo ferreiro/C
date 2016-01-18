@@ -250,20 +250,10 @@ static ssize_t
 device_write(struct file *filp, const char *buff, size_t len, loff_t * off)
 {
 
-	char *userInput;
-	int i, bytes_to_write = len;
-	int numLock, capsLock, scrollLock; // 0= off | 1 = on
+	char kbuf[len];
+	int i, bytes_to_write = len, ledsMask = 0;
+	int numLock, capsLock, scrollLock; // 0= off | 1 = on 
 	
-    if (*msg_Ptr == 0)
-        return 0;
-        
-    /* Make sure we don't read more chars than
-     * those remaining to read
-     */
-     /*
-    if (bytes_to_write > strlen(msg_Ptr))
-        bytes_to_read=strlen(msg_Ptr);
-       */ 
 	numLock 	= 0; // Turn off (0=off | 1=on)
 	capsLock 	= 0; // Turn off
 	scrollLock 	= 0; // Turn off
@@ -272,25 +262,23 @@ device_write(struct file *filp, const char *buff, size_t len, loff_t * off)
 	/*
 	* Actually transfer the data onto the userspace buffer.
 	* For this task we use copy_to_user() due to security issues
-	*/
-	/*
-	if (copy_from_user(userInput,buff,bytes_to_write) != 0) {
+	*/ 
+	if (copy_from_user(kbuf,buff,bytes_to_write) != 0) {
 		printk(KERN_ALERT "Problems copying....\n"); 
 		return -EFAULT;
-	}
-	*/
+	} 
 	
 	for (i = 0; i < bytes_to_write; i++) {
-		if (buff[i] == '1') 
+		if (kbuf[i] == '1') 
 			numLock = 1; 
-		if (buff[i] == '2')
+		if (kbuf[i] == '2')
 			capsLock = 1;
-		if (buff[i] == '3')
+		if (kbuf[i] == '3')
 			scrollLock = 1;
 	}
 	
 	// Make mask depending on the 3 values.
-	int ledsMask = 0;
+	
 	
 	if (numLock == 0 && capsLock == 0 && scrollLock == 1)
 		ledsMask = 0x1;
@@ -310,7 +298,7 @@ device_write(struct file *filp, const char *buff, size_t len, loff_t * off)
 		ledsMask = 0x0;
 	
 	kbd_driver= get_kbd_driver_handler();
-    set_leds(kbd_driver,ALL_LEDS_ON);
+    set_leds(kbd_driver, ledsMask);
     
 	//printk(userInput[i]);
 	//printk("%s", userInput[i]);
@@ -318,8 +306,9 @@ device_write(struct file *filp, const char *buff, size_t len, loff_t * off)
 	printk(KERN_ALERT "numLock %d\n", numLock);
 	printk(KERN_ALERT "capsLock %d\n", capsLock);
 	printk(KERN_ALERT "scrollLock %d\n", scrollLock);
+	printk(KERN_ALERT "MAsk %d", ledsMask);
 
-	return -EPERM;
+	return SUCCESS;
 }
 
 /*
