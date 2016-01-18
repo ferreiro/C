@@ -266,11 +266,9 @@ void binaryCounter() {
 	int i;
 	
 	for (i=0; i <= 7; i++) {
-		buff[0] = i & 0x1;
-		buff[1] = i & 0x2;
-		buff[2] = i & 0x4; 
 		
-		puts(buff);
+		buff |= i;
+		puts buff;
 		
 		if((setLed(fileDescriptor, buff, 1)) != 0) {
 			puts("Problems setting the ledt");
