@@ -1,14 +1,17 @@
-/*
- *  
- * 
- */
-
 #include <linux/kernel.h>
 #include <linux/module.h>
 #include <linux/fs.h>
 #include <asm/uaccess.h>	/* for copy_to_user */
 #include <linux/cdev.h>
 
+// modleds imports
+#include <asm-generic/errno.h>
+#include <linux/init.h>
+#include <linux/tty.h>      /* For fg_console */
+#include <linux/kd.h>       /* For KDSETLED */
+#include <linux/vt_kern.h>
+#include <linux/version.h> /* For LINUX_VERSION_CODE */
+ 
 MODULE_LICENSE("GPL");
 
 /*
@@ -22,8 +25,11 @@ static ssize_t device_read(struct file *, char *, size_t, loff_t *);
 static ssize_t device_write(struct file *, const char *, size_t, loff_t *);
 
 #define SUCCESS 0
-#define DEVICE_NAME "chardev_leds"	/* Dev name as it appears in /proc/devices   */
+#define DEVICE_NAME "chardev_leds" /* Dev name as it appears in /proc/devices   */
 #define BUF_LEN 80		/* Max length of the message from the device */
+
+#define ALL_LEDS_ON 0x7 // modLeds leds maks
+#define ALL_LEDS_OFF 0 // modLeds leds maks
 
 /*
  * Global variables are declared as static, so are global within the file.
@@ -46,31 +52,32 @@ static struct file_operations fops = {
     .release = device_release
 };
 
-
-/*
- * This function is called when the module is loaded
- */
 /*
  * This function is called when the module is loaded
  */
 int init_module(void)
 {
-    int major;		/* Major number assigned to our device driver */
-    int minor;		/* Minor number assigned to the associated character device */
+    int major;	/* Major number assigned to our device driver */
+    int minor;  /* Minor number assigned to the associated character device */
 
-    /* Get available (major,minor) range */
-    if (alloc_chrdev_region (&start, 0, 1,DEVICE_NAME)) {
-        printk(KERN_INFO "Can't allocate chrdev_region()");
+    // 1: Get available (major,minor) range for the driver
+    // Reserves a range of (major, minor) pairs for the driver. 
+
+    if (alloc_chrdev_region (&start, 0, 1, DEVICE_NAME)) {
+        printk(KERN_INFO "Can't allocate chrdev_leds_region()");
         return -ENOMEM;
     }
+    
+    // 2: Allocate and initialize CHARACTER DEVICE (chardev) structure.
 
-    /* Create associated cdev */
     if ((chardev=cdev_alloc())==NULL) {
         printk(KERN_INFO "cdev_alloc() failed ");
         return -ENOMEM;
     }
 
-    cdev_init(chardev,&fops);
+    cdev_init(chardev,&fops); // Add operations we're implementing
+    
+    // 3: Add CHARACTER DEVICE (chardev) device to the system.
 
     if (cdev_add(chardev,start,1)) {
         printk(KERN_INFO "cdev_add() failed ");
@@ -79,7 +86,8 @@ int init_module(void)
 
     major=MAJOR(start);
     minor=MINOR(start);
-
+    
+    printk(KERN_INFO "Welcome to CHARDEV_LEDS!!!!!!!!!");
     printk(KERN_INFO "I was assigned major number %d. To talk to\n", major);
     printk(KERN_INFO "the driver, create a dev file with\n");
     printk(KERN_INFO "'sudo mknod -m 666 /dev/%s c %d %d'.\n", DEVICE_NAME, major,minor);
@@ -94,16 +102,21 @@ int init_module(void)
  */
 void cleanup_module(void)
 {
-    /* Destroy chardev */
+    /* Destroy chardev struture */
     if (chardev)
         cdev_del(chardev);
 
     /*
-     * Unregister the device
+     * Unregister the device.
+     * Release the (major, minor) pair reserved on init_module
      */
     unregister_chrdev_region(start, 1);
 }
 
+/****************************************
+****** Character device operations ****** 
+*****************************************/
+ 
 /*
  * Called when a process tries to open the device file, like
  * "cat /dev/chardev"
@@ -166,13 +179,16 @@ static ssize_t device_read(struct file *filp,	/* see include/linux/fs.h   */
 
     /* Make sure we don't read more chars than
      * those remaining to read
-    	 */
+     */
     if (bytes_to_read > strlen(msg_Ptr))
         bytes_to_read=strlen(msg_Ptr);
 
     /*
      * Actually transfer the data onto the userspace buffer.
      * For this task we use copy_to_user() due to security issues
+     *
+     * Copy the msg_Ptr (source that exists on kernel-space)
+     *   to buffer (destination that must exist in user_space) 
      */
     if (copy_to_user(buffer,msg_Ptr,bytes_to_read))
         return -EFAULT;
@@ -198,6 +214,14 @@ static ssize_t device_read(struct file *filp,	/* see include/linux/fs.h   */
 // https://www.quora.com/Linux-Kernel/How-does-copy_to_user-work
 // int copy_to_user(void *dst, const void *src, unsigned int size);
 
+static ssize_t
+device_write(struct file *filp, const char *buff, size_t len, loff_t * off)
+{
+    printk(KERN_ALERT "Sorry, this operation isn't supported.\n");
+    return -EPERM;
+}
+
+/*
 static ssize_t
 device_write(struct file *filp, const char *buff, size_t len, loff_t * off)
 {
@@ -231,7 +255,24 @@ device_write(struct file *filp, const char *buff, size_t len, loff_t * off)
 
     return -EPERM;
 }
+*/
+ 
 
+/*******************************
+****** For the LEDS stuff ****** 
+********************************/
+
+/* Get driver handler */
+struct tty_driver* get_kbd_driver_handler(void)
+{
+    printk(KERN_INFO "modleds: loading\n");
+    printk(KERN_INFO "modleds: fgconsole is %x\n", fg_console);
+#if ( LINUX_VERSION_CODE > KERNEL_VERSION(2,6,32) )
+    return vc_cons[fg_console].d->port.tty->driver;
+#else
+    return vc_cons[fg_console].d->vc_tty->driver;
+#endif
+}
 
 /* Set led state to that specified by mask */
 static inline int set_leds(struct tty_driver* handler, unsigned int mask)
@@ -242,6 +283,7 @@ static inline int set_leds(struct tty_driver* handler, unsigned int mask)
     return (handler->ops->ioctl) (vc_cons[fg_console].d->vc_tty, NULL, KDSETLED, mask);
 #endif
 }
+
 
 
 
