@@ -19,6 +19,8 @@ int menu();
 int setLed(int filedesc, char *buf, int len);
 void fountain();
 void randomPattern();
+void stroves();
+void binaryCounter();
 
 void SleepMs(int ms) {
 usleep(ms*1000); //convert to microseconds
@@ -46,12 +48,10 @@ int main() {
 			fountain();
 		else if (option == 2) // random
 			randomPattern();
-		/*else if (option == 2) // virus
-			virus();
-		else if (option == 3) // cars
-			cars();
-		else if (option == 4) // random
-			random();*/
+		else if (option == 3) // stroves
+			stroves(); 
+		else if (option == 4) // binary counter
+			binaryCounter(); 
 	}
 
 	if (close(fileDescriptor) < 0) {
@@ -151,9 +151,9 @@ int menu() {
 
 	puts("\n\n Option | Description");
 	puts("   1    | Las vegas Fountain");
-	puts("   2    | Crazy Fountain");
-	puts("   3    | Fast and Furious - Speed racing");
-	puts("   4    | RVndom"); // Chooses one of the previous modes randomly
+	puts("   2    | RVndom"); // Chooses one of the previous modes randomly
+	puts("   3    | Crazy Stroves - Speed racing");
+	puts("   4    | Fast and Furious Binary Counter");
 	puts("   0    | Exit\n");
 
 	while (!valid) {
@@ -211,10 +211,8 @@ void randomPattern() {
 	char tmpBuff[10]; 
 
 	n = 100;
-
-	/* Intializes random number generator */
 	srand((unsigned) time(&t));
-	
+
 	puts("Executing Random");
 	
 	/* Print 5 random numbers from 0 to 49 */
@@ -235,4 +233,51 @@ void randomPattern() {
 	
 	puts("FInished");
    
+}
+
+void stroves() {
+	int n = 1000000, i;
+	char *buff;
+	
+	for( i = 0 ; i < n ; i++ ) {
+		
+		if (i % 2 == 0) {
+			buff = "12";
+		}
+		else {
+			buff = "23";
+		}
+		
+		puts(buff);
+	 
+		if((setLed(fileDescriptor, buff, 1)) != 0) {
+			puts("Problems setting the ledt");
+		}
+		
+		SleepMs(SLEEP_TIME/(i+0.6 - i*0.9) );
+	}
+	
+	puts("FInished");
+}
+
+
+void binaryCounter() {
+	char* buff = "111";
+	int i;
+	
+	for (i=0; i <= 7; i++) {
+		buff[0] = i & 0x1;
+		buff[1] = i & 0x2;
+		buff[2] = i & 0x4; 
+		
+		puts(buff);
+		
+		if((setLed(fileDescriptor, buff, 1)) != 0) {
+			puts("Problems setting the ledt");
+		}
+		
+		
+		SleepMs(SLEEP_TIME/(i+0.6 - i*0.9) );
+		
+	}
 }
