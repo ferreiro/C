@@ -254,31 +254,38 @@ device_write(struct file *filp, const char *buff, size_t len, loff_t * off)
 	int i, bytes_to_write = len;
 	int numLock, capsLock, scrollLock; // 0= off | 1 = on
 	
+    if (*msg_Ptr == 0)
+        return 0;
+        
+    /* Make sure we don't read more chars than
+     * those remaining to read
+     */
+     /*
+    if (bytes_to_write > strlen(msg_Ptr))
+        bytes_to_read=strlen(msg_Ptr);
+       */ 
 	numLock 	= 0; // Turn off (0=off | 1=on)
 	capsLock 	= 0; // Turn off
 	scrollLock 	= 0; // Turn off
 	
 	printk(KERN_ALERT "Welcome to the write operation.\n"); 
-	
-	printk(KERN_ALERT "numLock %d\n", numLock);
-	printk(KERN_ALERT "capsLock %d\n", capsLock);
-	printk(KERN_ALERT "scrollLock %d\n", scrollLock);
-
 	/*
 	* Actually transfer the data onto the userspace buffer.
 	* For this task we use copy_to_user() due to security issues
-	*/	
-	if (copy_from_user(userInput,buff,bytes_to_write)) {
+	*/
+	/*
+	if (copy_from_user(userInput,buff,bytes_to_write) != 0) {
 		printk(KERN_ALERT "Problems copying....\n"); 
 		return -EFAULT;
 	}
+	*/
 	
 	for (i = 0; i < bytes_to_write; i++) {
-		if (userInput[i] == '1') 
+		if (buff[i] == '1') 
 			numLock = 1; 
-		if (userInput[i] == '2')
+		if (buff[i] == '2')
 			capsLock = 1;
-		if (userInput[i] == '3')
+		if (buff[i] == '3')
 			scrollLock = 1;
 	}
 	
@@ -307,6 +314,10 @@ device_write(struct file *filp, const char *buff, size_t len, loff_t * off)
     
 	//printk(userInput[i]);
 	//printk("%s", userInput[i]);
+
+	printk(KERN_ALERT "numLock %d\n", numLock);
+	printk(KERN_ALERT "capsLock %d\n", capsLock);
+	printk(KERN_ALERT "scrollLock %d\n", scrollLock);
 
 	return -EPERM;
 }
