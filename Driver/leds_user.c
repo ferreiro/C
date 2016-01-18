@@ -236,7 +236,7 @@ void randomPattern() {
 }
 
 void stroves() {
-	int n = 1000000, i;
+	int n = 10000, i;
 	char *buff;
 	
 	for( i = 0 ; i < n ; i++ ) {
@@ -262,20 +262,27 @@ void stroves() {
 
 
 void binaryCounter() {
-	char* buff = "111";
+	char* buff;
 	int i;
 	
 	for (i=0; i <= 7; i++) {
 		
-		buff |= i;
-		puts buff;
+		if (i==0) buff = "0x0";
+		else if (i==1) buff = "0x1"; 
+		else if (i==2) buff = "0x2";
+		else if (i==3) buff = "0x3";
+		else if (i==4) buff = "0x4";
+		else if (i==5) buff = "0x5";
+		else if (i==6) buff = "0x6";
+		else if (i==7) buff = "0x7";
+		 
+		puts(buff);
 		
 		if((setLed(fileDescriptor, buff, 1)) != 0) {
 			puts("Problems setting the ledt");
 		}
 		
-		
-		SleepMs(SLEEP_TIME/(i+0.6 - i*0.9) );
+		SleepMs(1000);
 		
 	}
 }
