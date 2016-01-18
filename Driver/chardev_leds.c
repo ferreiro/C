@@ -12,6 +12,9 @@
 #include <linux/vt_kern.h>
 #include <linux/version.h> /* For LINUX_VERSION_CODE */
  
+struct tty_driver* kbd_driver= NULL;
+
+ 
 MODULE_LICENSE("GPL");
 
 /*
@@ -111,6 +114,34 @@ void cleanup_module(void)
      * Release the (major, minor) pair reserved on init_module
      */
     unregister_chrdev_region(start, 1);
+}
+
+ 
+
+/*******************************
+****** For the LEDS stuff ****** 
+********************************/
+
+/* Get driver handler */
+struct tty_driver* get_kbd_driver_handler(void)
+{
+    printk(KERN_INFO "modleds: loading\n");
+    printk(KERN_INFO "modleds: fgconsole is %x\n", fg_console);
+#if ( LINUX_VERSION_CODE > KERNEL_VERSION(2,6,32) )
+    return vc_cons[fg_console].d->port.tty->driver;
+#else
+    return vc_cons[fg_console].d->vc_tty->driver;
+#endif
+}
+
+/* Set led state to that specified by mask */
+static inline int set_leds(struct tty_driver* handler, unsigned int mask)
+{
+#if ( LINUX_VERSION_CODE > KERNEL_VERSION(2,6,32) )
+    return (handler->ops->ioctl) (vc_cons[fg_console].d->port.tty, KDSETLED,mask);
+#else
+    return (handler->ops->ioctl) (vc_cons[fg_console].d->vc_tty, NULL, KDSETLED, mask);
+#endif
 }
 
 /****************************************
@@ -214,11 +245,70 @@ static ssize_t device_read(struct file *filp,	/* see include/linux/fs.h   */
 // https://www.quora.com/Linux-Kernel/How-does-copy_to_user-work
 // int copy_to_user(void *dst, const void *src, unsigned int size);
 
+// REcibimos del usuario, un array de numeros (que crea usando sudo echo 123)
 static ssize_t
 device_write(struct file *filp, const char *buff, size_t len, loff_t * off)
 {
-    printk(KERN_ALERT "Sorry, this operation isn't supported.\n");
-    return -EPERM;
+
+	char *userInput;
+	int i, bytes_to_write = len;
+	int numLock, capsLock, scrollLock; // 0= off | 1 = on
+	
+	numLock 	= 0; // Turn off (0=off | 1=on)
+	capsLock 	= 0; // Turn off
+	scrollLock 	= 0; // Turn off
+	
+	printk(KERN_ALERT "Welcome to the write operation.\n"); 
+	
+	printk(KERN_ALERT "numLock %d\n", numLock);
+	printk(KERN_ALERT "capsLock %d\n", capsLock);
+	printk(KERN_ALERT "scrollLock %d\n", scrollLock);
+
+	/*
+	* Actually transfer the data onto the userspace buffer.
+	* For this task we use copy_to_user() due to security issues
+	*/	
+	if (copy_from_user(userInput,buff,bytes_to_write)) {
+		printk(KERN_ALERT "Problems copying....\n"); 
+		return -EFAULT;
+	}
+	
+	for (i = 0; i < bytes_to_write; i++) {
+		if (userInput[i] == '1') 
+			numLock = 1; 
+		if (userInput[i] == '2')
+			capsLock = 1;
+		if (userInput[i] == '3')
+			scrollLock = 1;
+	}
+	
+	// Make mask depending on the 3 values.
+	int ledsMask = 0;
+	
+	if (numLock == 0 && capsLock == 0 && scrollLock == 1)
+		ledsMask = 0x1;
+	else if (numLock == 0 && capsLock == 1 && scrollLock == 0)
+		ledsMask = 0x2;
+	else if (numLock == 0 && capsLock == 1 && scrollLock == 1)
+		ledsMask = 0x3;
+	else if (numLock == 1 && capsLock == 0 && scrollLock == 0)
+		ledsMask = 0x4;
+	else if (numLock == 1 && capsLock == 0 && scrollLock == 1)
+		ledsMask = 0x5;
+	else if (numLock == 1 && capsLock == 1 && scrollLock == 0)
+		ledsMask = 0x6;
+	else if (numLock == 1 && capsLock == 1 && scrollLock == 1)
+		ledsMask = 0x7;
+	else
+		ledsMask = 0x0;
+	
+	kbd_driver= get_kbd_driver_handler();
+    set_leds(kbd_driver,ALL_LEDS_ON);
+    
+	//printk(userInput[i]);
+	//printk("%s", userInput[i]);
+
+	return -EPERM;
 }
 
 /*
@@ -256,34 +346,6 @@ device_write(struct file *filp, const char *buff, size_t len, loff_t * off)
     return -EPERM;
 }
 */
- 
-
-/*******************************
-****** For the LEDS stuff ****** 
-********************************/
-
-/* Get driver handler */
-struct tty_driver* get_kbd_driver_handler(void)
-{
-    printk(KERN_INFO "modleds: loading\n");
-    printk(KERN_INFO "modleds: fgconsole is %x\n", fg_console);
-#if ( LINUX_VERSION_CODE > KERNEL_VERSION(2,6,32) )
-    return vc_cons[fg_console].d->port.tty->driver;
-#else
-    return vc_cons[fg_console].d->vc_tty->driver;
-#endif
-}
-
-/* Set led state to that specified by mask */
-static inline int set_leds(struct tty_driver* handler, unsigned int mask)
-{
-#if ( LINUX_VERSION_CODE > KERNEL_VERSION(2,6,32) )
-    return (handler->ops->ioctl) (vc_cons[fg_console].d->port.tty, KDSETLED,mask);
-#else
-    return (handler->ops->ioctl) (vc_cons[fg_console].d->vc_tty, NULL, KDSETLED, mask);
-#endif
-}
-
 
 
 
