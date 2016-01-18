@@ -2,6 +2,9 @@
 #include <unistd.h>
 #include <fcntl.h>
 #include <stdbool.h>
+#include <stdlib.h>
+#include <time.h>
+#include <string.h>
 
 static int fileDescriptor;
 #define PATH "/dev/chardev_leds" // Path to write
@@ -10,19 +13,23 @@ static int fileDescriptor;
 #define NUMLOCK "1"
 #define CAPSLOCK "2"
 #define SCROLLLOCK "3"
-#define SLEEP_TIME 2 // number in seconds
-
-static int led[3] = { NUMLOCK, CAPSLOCK, SCROLLLOCK };
-
+#define SLEEP_TIME 50 // number in seconds
+ 
 int menu();
 int setLed(int filedesc, char *buf, int len);
 void fountain();
+void randomPattern();
+
+void SleepMs(int ms) {
+usleep(ms*1000); //convert to microseconds
+return;
+}
 
 int main() {
 	bool finish= false;
-	int i = 0, option;
+	int option;
 
-	printf("Welcome to my awesome program!!");
+	printf("\nWelcome to my awesome program!!");
 
 	if((fileDescriptor = open(PATH, O_RDWR)) < 0) {
 		puts("Hey!!! The file coudln't be opened");
@@ -37,15 +44,17 @@ int main() {
 			finish=true;
 		else if (option == 1) // fountain
 			fountain();
-		else if (option == 2) // virus
+		else if (option == 2) // random
+			randomPattern();
+		/*else if (option == 2) // virus
 			virus();
 		else if (option == 3) // cars
 			cars();
 		else if (option == 4) // random
-			random();
+			random();*/
 	}
 
-	if (close(filedesc) < 0) {
+	if (close(fileDescriptor) < 0) {
 		puts("Can not close the file");
 		return 1;
 	} 
@@ -66,7 +75,6 @@ int main() {
 	if((writeNumToFile(filedesc, "123", 3)) == 0) {
 		puts("COrrect!!!!");
 	}
-	/*
 	while(i < 10) {
 		
 		buf = "1";
@@ -141,18 +149,18 @@ int menu() {
 	int option = -1;
 	bool valid = false;
 
-	puts(" Option | Description\n");
-	puts("   1    | Las vegas Fountain\n");
-	puts("   2    | Crazy Fountain\n");
-	puts("   3    | Fast and Furious - Speed racing\n");
-	puts("   4    | RVndom\n"); // Chooses one of the previous modes randomly
+	puts("\n\n Option | Description");
+	puts("   1    | Las vegas Fountain");
+	puts("   2    | Crazy Fountain");
+	puts("   3    | Fast and Furious - Speed racing");
+	puts("   4    | RVndom"); // Chooses one of the previous modes randomly
 	puts("   0    | Exit\n");
 
 	while (!valid) {
 		puts("Which option do you want? (type the number): \n");
 		scanf("%d", &option);
 		if (option >= 0 && option <= 4)
-			valid=true
+			valid=true;
 		else
 			puts("Wrong option! Try again\n");
 	}
@@ -170,48 +178,61 @@ int setLed(int filedesc, char *buf, int len) {
 }
 
 void fountain() {
-	int i=0, total = 3;
-	//char *buf;
-
+	int i=0, j=0, total = 100;
+	char *ledsNumber = "123";
+ 
+	puts("hi");
+	
 	for (i=0; i < total; i++) {
 		// Go right
-		for (j=0; j < N; j++) { 
-			if((setLeft(fileDescriptor, led[j], 1)) != 0) {
-				puts(led[j]);
+		for (j=0; j < N; j++) {
+			SleepMs(SLEEP_TIME);
+			printf("%c", ledsNumber[j]);
+			if((setLed(fileDescriptor, &ledsNumber[j], 1)) != 0) {
 				puts("Problems setting the ledt");
 			}
-			sleep(SLEEP_TIME);
 		}
 		// Go left
-		for (j=N; j > 0; j--) {
-			if((setLeft(fileDescriptor, led[j], 1)) != 0) {
-				puts(led[j]);
+		for (j=N-2; j > 0; j--) {
+			SleepMs(SLEEP_TIME);
+			printf("%c", ledsNumber[j]);
+			if((setLed(fileDescriptor, &ledsNumber[j], 1)) != 0) {
 				puts("Problems setting the ledt");
 			}
-			sleep(SLEEP_TIME);
 		}
+		printf("\n");
 	}
 }
 
+void randomPattern() {
+	int i, n, num;
+	time_t t;
+	char *buff;
+	char tmpBuff[10]; 
 
+	n = 100;
 
-
-
-
-
-
-
-
-
-/*
-	int i = 0;
-	char *buf;
-
-	for (i=0; i < 3; i++) {
-		setLed(int filedesc, char *buf, int len)
-		buf = 1;
-		if((setLeft(filedesc, "23", 2)) == 0) {
-			puts("[X] Correct");
+	/* Intializes random number generator */
+	srand((unsigned) time(&t));
+	
+	puts("Executing Random");
+	
+	/* Print 5 random numbers from 0 to 49 */
+	for( i = 0 ; i < n ; i++ ) {
+		
+		num = random() % 3;
+		sprintf(tmpBuff, "%d", num);
+		buff = tmpBuff;
+		
+		puts(buff);
+	 
+		if((setLed(fileDescriptor, buff, 1)) != 0) {
+			puts("Problems setting the ledt");
 		}
+		
+		SleepMs(SLEEP_TIME);
 	}
-*/
+	
+	puts("FInished");
+   
+}
