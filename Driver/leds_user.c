@@ -16,7 +16,7 @@ int menu();
 int setLed(int filedesc, char *buf);
 void fountain();
 void randomPattern();
-void stroves();
+void speedRacing();
 void binaryCounter();
 
 void SleepMs(int ms) {
@@ -38,6 +38,7 @@ int main() {
 	while (!finish) {
 
 		option = menu();
+		puts("Executing...");
 
 		if (option==0) // exit program
 			finish=true;
@@ -45,11 +46,14 @@ int main() {
 			fountain();
 		else if (option == 2) // random
 			randomPattern();
-		else if (option == 3) // stroves
-			stroves(); 
+		else if (option == 3) // Speed racing
+			speedRacing(); 
 		else if (option == 4) // binary counter
 			binaryCounter();			
-			
+
+		puts("Finished execution...");
+		
+		// Turn off leds after execution finished
 		if((setLed(fileDescriptor, "")) != 0) {
 			puts("Problems setting the ledt");
 		}
@@ -100,7 +104,7 @@ void fountain() {
 	int i=0, j=0, total = 10;
 	char *ledsNumber = "123";
 	char c;
- 
+	
 	for (i=0; i < total; i++) {
 		for (j = 0; j < 4; j++) {
 			c = ledsNumber[j];
@@ -110,7 +114,7 @@ void fountain() {
 			if((setLed(fileDescriptor, &c)) != 0) {
 				puts("Problems setting the ledt");
 			}
-			SleepMs(170);
+			SleepMs(190);
 		}
 	}
 }
@@ -124,27 +128,21 @@ void randomPattern() {
 	n = 60;
 	srand((unsigned) time(&t));
 
-	puts("Executing Random");
-	
-	/* Print 5 random numbers from 0 to 49 */
 	for( i = 0 ; i < n ; i++ ) {
 		
 		num = (random() % 3) + 1;
-		sprintf(tmpBuff, "%d", num);
+		sprintf(tmpBuff, "%d", num); // Convert number to string
 		buff = tmpBuff;
 		
 		if((setLed(fileDescriptor, buff)) != 0) {
 			puts("Problems setting the ledt");
 		}
 		
-		SleepMs(SLEEP_TIME);
-	}
-	
-	puts("FInished");
-   
+		SleepMs(190);
+	}   
 }
 
-void stroves() {
+void speedRacing() {
 	int n = 10000, i;
 	char *buff;
 	int time = 3000;
@@ -157,9 +155,7 @@ void stroves() {
 		else {
 			buff = "22";
 		}
-		
-		puts(buff);
-	 
+		 
 		if((setLed(fileDescriptor, buff)) != 0) {
 			puts("Problems setting the ledt");
 		}
@@ -167,8 +163,6 @@ void stroves() {
 		time /= 1.25;
 		SleepMs( time );
 	}
-	
-	puts("FInished");
 }
 
 
@@ -187,13 +181,10 @@ void binaryCounter() {
 		else if (i==6) buff = "12";
 		else if (i==7) buff = "123";
 		 
-		puts(buff);
-		
 		if((setLed(fileDescriptor, buff)) != 0) {
 			puts("Problems setting the ledt");
 		}
 		
 		SleepMs(1000);
-		
 	}
 }
