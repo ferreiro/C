@@ -14,7 +14,6 @@
  
 struct tty_driver* kbd_driver= NULL;
 
- 
 MODULE_LICENSE("GPL");
 
 /*
@@ -30,9 +29,6 @@ static ssize_t device_write(struct file *, const char *, size_t, loff_t *);
 #define SUCCESS 0
 #define DEVICE_NAME "chardev_leds" /* Dev name as it appears in /proc/devices   */
 #define BUF_LEN 80		/* Max length of the message from the device */
-
-#define ALL_LEDS_ON 0x7 // modLeds leds maks
-#define ALL_LEDS_OFF 0 // modLeds leds maks
 
 /*
  * Global variables are declared as static, so are global within the file.
@@ -90,7 +86,7 @@ int init_module(void)
     major=MAJOR(start);
     minor=MINOR(start);
     
-    printk(KERN_INFO "Welcome to CHARDEV_LEDS!!!!!!!!!");
+    printk(KERN_INFO "Welcome to ChardevLeds!!");
     printk(KERN_INFO "I was assigned major number %d. To talk to\n", major);
     printk(KERN_INFO "the driver, create a dev file with\n");
     printk(KERN_INFO "'sudo mknod -m 666 /dev/%s c %d %d'.\n", DEVICE_NAME, major,minor);
@@ -115,8 +111,6 @@ void cleanup_module(void)
      */
     unregister_chrdev_region(start, 1);
 }
-
- 
 
 /*******************************
 ****** For the LEDS stuff ****** 
@@ -259,7 +253,7 @@ device_write(struct file *filp, const char *buff, size_t len, loff_t * off)
 {
 	char kbuf[len]; // Creating user space array
     int num_lock, caps_lock, scroll_lock; // 0= off | 1 = on 
-	int i, bytes_to_write, ledsMask = 0, tmp;
+	int i, bytes_to_write, ledsMask, tmp;
 	
 	num_lock 	= 0; // Turn off (0=off | 1=on)
 	caps_lock 	= 0; // Turn off
@@ -267,7 +261,9 @@ device_write(struct file *filp, const char *buff, size_t len, loff_t * off)
 
 	bytes_to_write = len;
 	
-	// Transfer date onto the userspace buffer. use copy_to_user() for security issues.
+	// Transfer date onto the userspace buffer. 
+	// Use copy_to_user() for security issues.
+	
 	if (copy_from_user(kbuf,buff,bytes_to_write) != 0) {
 		printk(KERN_ALERT "Problems copying....\n"); 
 		return -EFAULT;
@@ -280,17 +276,19 @@ device_write(struct file *filp, const char *buff, size_t len, loff_t * off)
 		else if (tmp == '3') scroll_lock = 1;
 	}
 	
+	ledsMask = 0x0;
+	
 	if (num_lock == 1)      
-        	ledsMask = (ledsMask | 0x2);
+        ledsMask = (ledsMask | 0x2);
 	if (caps_lock == 1)     
-        	ledsMask = (ledsMask | 0x4);
+        ledsMask = (ledsMask | 0x4);
 	if (scroll_lock == 1)   
-        	ledsMask = (ledsMask | 0x1);
+        ledsMask = (ledsMask | 0x1);
 
 	kbd_driver= get_kbd_driver_handler(); // Create a new driver handler
     set_leds(kbd_driver, ledsMask); // Setting keyboard leds using the mask
     
-    printDebug(ledsMask, num_lock, caps_lock, scroll_lock);
+    //printDebug(ledsMask, num_lock, caps_lock, scroll_lock);
     
 	return bytes_to_write;
 }
