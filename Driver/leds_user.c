@@ -97,21 +97,20 @@ int setLed(int filedesc, char *buf) {
 }
 
 void fountain() {
-	int i=0, j=0, total = 100;
+	int i=0, j=0, total = 10;
 	char *ledsNumber = "123";
+	char c;
  
-	puts("hi");
-	
 	for (i=0; i < total; i++) {
 		for (j = 0; j < 4; j++) {
-				char c = ledsNumber[j];
-				if (j == 3) {
-					c = ledsNumber[1];
-				} 
-				if((setLed(fileDescriptor, &c)) != 0) {
-					puts("Problems setting the ledt");
-				}
-				SleepMs(150);
+			c = ledsNumber[j];
+			if (j == 3) {
+				c = ledsNumber[1];
+			} 
+			if((setLed(fileDescriptor, &c)) != 0) {
+				puts("Problems setting the ledt");
+			}
+			SleepMs(170);
 		}
 	}
 }
