@@ -8,13 +8,9 @@
 #include <math.h>  
 
 static int fileDescriptor;
-#define PATH "/dev/chardev_leds" // Path to write
 
-#define N 3
-#define NUMLOCK "1"
-#define CAPSLOCK "2"
-#define SCROLLLOCK "3"
 #define SLEEP_TIME 130 // number in seconds
+#define PATH "/dev/chardev_leds" // Path to write
  
 int menu();
 int setLed(int filedesc, char *buf);
@@ -64,89 +60,6 @@ int main() {
 		return 1;
 	} 
 
-	/*
-
-    int filedesc;
-    char *buf;
-    //int i = 0;
-    
-	if((filedesc = open(PATH, O_RDWR)) < 0) {
-		puts("Hey!!! The file coudln't be opened");
-		return 1;
-	}
-	if((writeNumToFile(filedesc, "23", 2)) == 0) {
-		puts("COrrect!!!!");
-	}
-	if((writeNumToFile(filedesc, "123", 3)) == 0) {
-		puts("COrrect!!!!");
-	}
-	while(i < 10) {
-		
-		buf = "1";
-		
-		
-		sleep(2);
-		
-		buf = "2";
-		if((bytes_writed = write(filedesc, buf, 1)) < 0) {
-			puts("Can not write to file!\n");
-			return 1;
-		}
-		
-		buf = "3";
-		sleep(2);
-		if((bytes_writed = write(filedesc, buf, 1)) < 0) {
-			puts("Can not write to file!\n");
-			return 1;
-		}
-		puts("jojojoj");
-		
-		i++;
-	} 
-	*/
-	/*
-	puts ("writed!!!");
-	buf = "";
-	
-	if((bytes_readed = read(filedesc, buf, 3)) < 0) {
-		puts("Can not read from file!\n");
-		return 1;
-	}
-	puts ("Readed!!!!!!");
-	sleep(0.33);
-	// Infinite while
-	while (1==1) {
-		
-		
-	}
-	*/
-	
-	
-	
-	
-	
-	
-	 
-	
-	/*
-	nread=read(0,buffer,128);
-    
-    if(nread == -1)
-     write(2,"an read error occured\n",26);
-     
-    if((write(1,buffer,nread))!= nread)
-       write(2,"a write error occured\n",27);
-	 */
-	
-	/*
-    if(write(filedesc,"This will be output to testfile.txt\n", 36) != 36)
-    {
-        write(2,"There was an error writing to testfile.txt\n");    // strictly not an error, it is allowable for fewer characters than requested to be written.
-        return 1;
-    }
-    * */
-    
-	
 	return 0;
 }
 
@@ -156,9 +69,9 @@ int menu() {
 
 	puts("\n\n Option | Description");
 	puts("   1    | Las vegas Fountain");
-	puts("   2    | RVndom"); // Chooses one of the previous modes randomly
-	puts("   3    | Crazy Stroves - Speed racing");
-	puts("   4    | Fast and Furious Binary Counter");
+	puts("   2    | RVndom Stroves"); // Chooses one of the previous modes randomly
+	puts("   3    | Fast and Furious Speed Racing");
+	puts("   4    | Crazy Binary Lights Counter");
 	puts("   0    | Exit\n");
 
 	while (!valid) {
