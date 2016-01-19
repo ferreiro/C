@@ -281,11 +281,11 @@ device_write(struct file *filp, const char *buff, size_t len, loff_t * off)
 	}
 	
 	if (num_lock == 1)      
-        ledsMask = ledsMask |= 0x2;
+        ledsMask = (ledsMask | 0x2);
 	if (caps_lock == 1)     
-        ledsMask = ledsMask |= 0x4;
+        ledsMask = (ledsMask | 0x4);
 	if (scroll_lock == 1)   
-        ledsMask = ledsMask |= 0x1;
+        ledsMask = (ledsMask | 0x1);
 
 	kbd_driver= get_kbd_driver_handler(); // Create a new driver handler
     set_leds(kbd_driver, ledsMask); // Setting keyboard leds using the mask
