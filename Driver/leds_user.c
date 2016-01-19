@@ -121,7 +121,7 @@ void randomPattern() {
 	char *buff;
 	char tmpBuff[10]; 
 
-	n = 100;
+	n = 60;
 	srand((unsigned) time(&t));
 
 	puts("Executing Random");
@@ -133,8 +133,6 @@ void randomPattern() {
 		sprintf(tmpBuff, "%d", num);
 		buff = tmpBuff;
 		
-		puts(buff);
-	 
 		if((setLed(fileDescriptor, buff)) != 0) {
 			puts("Problems setting the ledt");
 		}
