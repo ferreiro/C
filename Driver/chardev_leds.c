@@ -61,6 +61,8 @@ int init_module(void)
 
     // 1: Get available (major,minor) range for the driver
     // Reserves a range of (major, minor) pairs for the driver. 
+    // We use alloc_chrdev_region(), when the minor number is not known.
+    // If you know the minor number, then use register_chrdev_region()
 
     if (alloc_chrdev_region (&start, 0, 1, DEVICE_NAME)) {
         printk(KERN_INFO "Can't allocate chrdev_leds_region()");
