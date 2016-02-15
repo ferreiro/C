@@ -33,7 +33,6 @@ static ssize_t device_write(struct file *, const char *, size_t, loff_t *);
 /*
  * Global variables are declared as static, so are global within the file.
  */
-
 dev_t start;
 struct cdev* chardev=NULL;
 static int Device_Open = 0;	/* Is device open?
